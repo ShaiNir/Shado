@@ -81,12 +81,12 @@ exports.rival_teams = function(req, res) {
         where: {LeagueId: req.params.id},
         include: [ User ]
     }).then(function (teams) {
-        if(!teams) { return res.send(404); }
+        if(!teams) { return res.sevnd(404); }
         var filteredTeams = _.select(teams, function(team){
             // only select the teams whose user list doesn't include me
             var myTeam = _.select(team.users, function(user){
                     return user.id == me.id;
-                }).length == 0;
+                }).length != 0;
             return !myTeam;
         });
         return res.json(filteredTeams);
