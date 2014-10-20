@@ -1,7 +1,8 @@
 'use strict';
 
 var _ = require('lodash');
-var Transaction = require('../models').Transaction;
+var db =  require('../models');
+var Transaction = db.Transaction;
 
 // Get list of transactions
 exports.index = function(req, res) {
@@ -23,9 +24,40 @@ exports.show = function(req, res) {
 };
 
 // Creates a new transaction in the DB.
+// Input
+/** Format:
+{
+    league: ###,
+    type: 'TYPE',
+    TransactionItems: [
+      {
+         type:
+      }
+    ]
+}
+*/
+// UNDER CONSTRUCTION
 exports.create = function(req, res) {
-    Transaction.create(req.body).then(function(transaction){
-        return res.json(201, transaction);
+    var transactionDetail = _.pick(req.body,['LeagueId','type']);
+    var items = req.body.TransactionItems || {};
+    var transactionId;
+    Transaction.create(transactionDetail).then(function(transaction){
+        _.each(items, function(itemDetail){
+            db.TransactionItem.create(itemDetail).then(function(item){
+                transaction.addTransactionItem(item).then(function(){},function(err){
+                    return handleError(res, err);
+                });
+            },function(error){
+                return handleError(res, err);
+            });
+        });
+        // Include transaction items and approval needed
+        Transaction.find({where: {id: transaction.id}, include: [db.TransactionItem, db.TransactionApproval]})
+            .then(function(returnTransaction){
+                return res.json(201, returnTransaction);
+            }, function(error){
+                return handleError(res, error);
+            });
     },function(error) {
         return handleError(res, error);
     });
@@ -61,5 +93,6 @@ exports.destroy = function(req, res) {
 };
 
 function handleError(res, error) {
+    console.trace();
     return res.send(500, error);
 }

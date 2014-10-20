@@ -45,8 +45,8 @@ if (!global.hasOwnProperty('db')) {
 
     global.db.Player.belongsTo(global.db.Sport);
 
-    global.db.PlayerAssignment.belongsTo(global.db.Player);
-    global.db.PlayerAssignment.belongsTo(global.db.Team);
+    global.db.Player.hasMany(global.db.Team, {through: global.db.PlayerAssignment});
+    global.db.Team.hasMany(global.db.Player, {through: global.db.PlayerAssignment});
 
     global.db.User.hasMany(global.db.Team, {through: global.db.Stake});
     global.db.Team.hasMany(global.db.User, {through: global.db.Stake});
@@ -54,6 +54,7 @@ if (!global.hasOwnProperty('db')) {
     global.db.Transaction.belongsTo(global.db.League);
     global.db.Transaction.hasMany(global.db.TransactionApproval);
 
+    global.db.Transaction.hasMany(global.db.TransactionItem);
     global.db.TransactionItem.belongsTo(global.db.Transaction);
     global.db.TransactionItem.belongsTo(global.db.Team, {as: 'source'});
     global.db.TransactionItem.belongsTo(global.db.Team, {as: 'destination'});

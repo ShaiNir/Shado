@@ -74,7 +74,6 @@ exports.teams = function(req, res) {
 };
 
 // Get your rivals' teams in a given league
-// UNDER DEVELOPMENT
 exports.rival_teams = function(req, res) {
     var me = req.user;
     var teams = Team.findAll({
@@ -89,7 +88,16 @@ exports.rival_teams = function(req, res) {
                 }).length != 0;
             return !myTeam;
         });
-        return res.json(filteredTeams);
+        // Only include users' public profile and stake information.
+        var teamsWithProfiles = _.map(filteredTeams, function(team){
+            var profiles = _.map(team.Users, function(user){
+                return {profile: user.profile, role: user.Stake.role};
+            });
+            var teamObject = team.values;
+            teamObject.Users = profiles;
+            return teamObject;
+        });
+        return res.json(teamsWithProfiles);
     }, function(error){
         return handleError(res, error);
     });

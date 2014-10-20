@@ -7,8 +7,7 @@ var validatePresenceOf = function(value) {
 
 module.exports = function(sequelize, DataTypes) {
     return sequelize.define('User', {
-        firstName: DataTypes.STRING,
-        lastName: DataTypes.STRING,
+        name: DataTypes.STRING,
         phone: DataTypes.STRING,
         email: {
             type: DataTypes.STRING,

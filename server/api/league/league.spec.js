@@ -30,7 +30,7 @@ describe('GET /api/leagues/:id/teams', function() {
     var loginToken;
 
     before(function(done) {
-        // Clear users before testing
+        // Clear db before testing
         db.User.destroy({},{truncate: true}).success(function() {
             db.League.destroy({},{truncate: true}).success(function() {
                 db.Team.destroy({},{truncate: true}).success(function() {
@@ -91,7 +91,7 @@ describe('GET /api/leagues/:id/rival_teams', function() {
     var loginToken;
 
     before(function(done) {
-        // Clear users before testing
+        // Clear db before testing
         db.User.destroy({},{truncate: true}).success(function() {
             db.League.destroy({},{truncate: true}).success(function() {
                 db.Team.destroy({},{truncate: true}).success(function() {
@@ -145,6 +145,12 @@ describe('GET /api/leagues/:id/rival_teams', function() {
                 if (err) return done(err);
                 res.body.should.be.instanceof(Array);
                 res.body.length.should.equal(1);
+                res.body[0].Users.should.be.instanceof(Array);
+                res.body[0].Users.length.should.equal(1);
+                res.body[0].Users[0].profile.should.exist;
+                // User should never include salt or hashedPassword
+                (typeof res.body[0].Users[0].salt === 'undefined').should.be.true;
+                (typeof res.body[0].Users[0].hashedPassword === 'undefined').should.be.true;
                 done();
             });
     });
