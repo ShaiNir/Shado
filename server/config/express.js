@@ -16,8 +16,6 @@ var path = require('path');
 var config = require('./environment');
 var passport = require('passport');
 var session = require('express-session');
-var mongoStore = require('connect-mongo')(session);
-var mongoose = require('mongoose');
 
 module.exports = function(app) {
   var env = app.get('env');
@@ -31,14 +29,23 @@ module.exports = function(app) {
   app.use(cookieParser());
   app.use(passport.initialize());
 
-  // Persist sessions with mongoStore
+  var sessionStore;
+  if (process.env.HEROKU_POSTGRESQL_BRONZE_URL){
+      sessionStore = new (require('connect-pg-simple')(session))();
+  } else {
+      sessionStore = new (require('connect-pg-simple')(session))({
+          conString: 'pg://shado:shado@localhost:5432/shado'
+      });
+  }
+
+  // Persist sessions with postgres
   // We need to enable sessions for passport twitter because its an oauth 1.0 strategy
   app.use(session({
     secret: config.secrets.session,
     resave: true,
     saveUninitialized: true,
-    store: new mongoStore({ mongoose_connection: mongoose.connection })
-  }));
+    store: sessionStore
+  }))
   
   if ('production' === env) {
     app.use(favicon(path.join(config.root, 'public', 'favicon.ico')));
