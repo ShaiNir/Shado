@@ -32,15 +32,6 @@ var all = {
   // List of user roles
   userRoles: ['guest', 'user', 'admin'],
 
-  // MongoDB connection options
-  mongo: {
-    options: {
-      db: {
-        safe: true
-      }
-    }
-  },
-
   facebook: {
     clientID:     process.env.FACEBOOK_ID || 'id',
     clientSecret: process.env.FACEBOOK_SECRET || 'secret',
