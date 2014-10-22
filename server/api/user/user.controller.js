@@ -10,28 +10,19 @@ var validationError = function(res, err) {
   return res.json(422, err);
 };
 
-var omitPasswordAndSalt = function(user) {
-    user = _.omit(user, 'salt');
-    user = _.omit(user, 'hashedPassword')
-    return user;
-}
-
-var bulkOmitPasswordAndSalt = function(users) {
-  return _.map(users, function(user,index,list) {
-      return omitPasswordAndSalt(user);
-  });
-}
-
+// Columns we allow to be returned
+// salt and hashedPassword should NEVER be exposed in the API
+var internalProfileAttributes = ['id','name','phone','email','role','franchiseName','budget','provider'];
 
 /**
  * Get list of users
  * restriction: 'admin'
  */
 exports.index = function(req, res) {
-    User.findAll().then(function (users) {
+    User.findAll({attributes: internalProfileAttributes}).then(function (users) {
         return res.json(200, bulkOmitPasswordAndSalt(users));
     }, function(error){
-        return res.send(500, error);;
+        return res.send(500, error);
     });
 };
 
@@ -114,9 +105,8 @@ exports.changePassword = function(req, res, next) {
  * Get my info
  */
 exports.me = function(req, res, next) {
-    User.find(req.user.id).then(function(user){
+    User.find({where: {id: req.user.id}, attributes: internalProfileAttributes}).then(function(user){
      if (!user) return res.json(401);
-     user = omitPasswordAndSalt(user) ;
      res.json(user);
   }, function(error) {
       return next(error);
