@@ -60,6 +60,19 @@ exports.destroy = function(req, res) {
     });
 };
 
+exports.players = function(req, res) {
+    Team.find(req.params.id).then(function (team) {
+        if(!team) { return res.send(404); }
+        team.getPlayers().then(function(players) {
+            return res.json(players);
+        }, function(error) {
+            return handleError(res, error);
+        });
+    },  function(error){
+        return handleError(res, error);
+    });
+};
+
 function handleError(res, error) {
     return res.send(500, error);
 }
