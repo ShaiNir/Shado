@@ -2,6 +2,7 @@
 
 var _ = require('lodash');
 var db =  require('../models');
+var Promise = require("sequelize/node_modules/bluebird");
 var Transaction = db.Transaction;
 
 // Get list of transactions
@@ -24,8 +25,7 @@ exports.show = function(req, res) {
 };
 
 // Creates a new transaction in the DB.
-// Input
-/** Format:
+/** Input Format:
 {
     league: ###,
     type: 'TYPE',
@@ -36,28 +36,30 @@ exports.show = function(req, res) {
     ]
 }
 */
-// UNDER CONSTRUCTION
 exports.create = function(req, res) {
     var transactionDetail = _.pick(req.body,['LeagueId','type']);
     var items = req.body.TransactionItems || {};
     var transactionId;
     Transaction.create(transactionDetail).then(function(transaction){
-        _.each(items, function(itemDetail){
-            db.TransactionItem.create(itemDetail).then(function(item){
-                transaction.addTransactionItem(item).then(function(){},function(err){
-                    return handleError(res, err);
-                });
-            },function(error){
+        Promise.map(items, function(itemDetail){
+            return db.TransactionItem.create(itemDetail).then(function(item){
+                return item;
+            });
+        }).then(function(transactionItems){
+            transaction.setTransactionItems(transactionItems);
+            transaction.save().then(function(transaction) {
+                Transaction.find({where: {id: transaction.id}, include: [db.TransactionItem, db.TransactionApproval]})
+                    .then(function (returnTransaction) {
+                        return res.json(201, returnTransaction);
+                    }, function (error) {
+                        return handleError(res, error);
+                    });
+            }, function(error){
                 return handleError(res, err);
             });
+        }, function(error){
+            return handleError(res, err);
         });
-        // Include transaction items and approval needed
-        Transaction.find({where: {id: transaction.id}, include: [db.TransactionItem, db.TransactionApproval]})
-            .then(function(returnTransaction){
-                return res.json(201, returnTransaction);
-            }, function(error){
-                return handleError(res, error);
-            });
     },function(error) {
         return handleError(res, error);
     });

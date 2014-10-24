@@ -124,15 +124,13 @@ describe('POST /api/transactions/create', function() {
             .send(transaction);
 
         req.expect(201)
-           // .expect('Content-Type', /json/)
+            .expect('Content-Type', /json/)
             .end(function(err, res) {
                 if (err) return done(err);
                 res.body.should.be.instanceof(Object);
                 res.body.LeagueId.should.exist;
                 res.body.TransactionItems.should.be.instanceof(Array);
-            //    res.body.TransactionItems.length.should.equal(2);
-                res.body.TransactionApprovals.should.be.instanceof(Array);
-            //    res.body.TransactionApprovals.length.should.equal(2);
+                res.body.TransactionItems.length.should.equal(2);
                 done();
             });
     });
