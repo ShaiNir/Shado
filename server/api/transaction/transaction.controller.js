@@ -1,7 +1,7 @@
 'use strict';
 
 var _ = require('lodash');
-var db =  require('../models');
+var db = require('../models');
 var Promise = require("sequelize/node_modules/bluebird");
 var Transaction = db.Transaction;
 
@@ -55,10 +55,10 @@ exports.create = function(req, res) {
                         return handleError(res, error);
                     });
             }, function(error){
-                return handleError(res, err);
+                return handleError(res, error);
             });
         }, function(error){
-            return handleError(res, err);
+            return handleError(res, error);
         });
     },function(error) {
         return handleError(res, error);

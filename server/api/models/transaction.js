@@ -4,13 +4,5 @@ module.exports = function(sequelize, DataTypes) {
             type: DataTypes.ENUM,
             values: ['trade', 'freeagent', 'draft']
         }
-    },{
-        instanceMethods: {
-            generateApprovals: function(){
-                Promise.map(this.transactionItems, function(){
-
-                }).then()
-            }
-        }
     })
 }

@@ -2,7 +2,7 @@ module.exports = function(sequelize, DataTypes) {
     return sequelize.define('TransactionApproval', {
         status: {
             type: DataTypes.ENUM,
-            values: ['Pending', 'Approved', 'Rejected']
+            values: ['pending', 'approved', 'rejected']
         },
         role: {
             type: DataTypes.ENUM,
