@@ -62,9 +62,7 @@ if (!global.hasOwnProperty('db')) {
     global.db.TransactionItem.belongsTo(global.db.Team, {as: 'source'});
     global.db.TransactionItem.belongsTo(global.db.Team, {as: 'destination'});
 
-    // A transaction can require the approval of a team or a specific user
     global.db.TransactionApproval.belongsTo(global.db.Team);
-    global.db.TransactionApproval.belongsTo(global.db.User);
 }
 
 module.exports = global.db

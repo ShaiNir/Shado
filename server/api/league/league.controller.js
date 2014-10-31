@@ -76,7 +76,7 @@ exports.teams = function(req, res) {
 exports.rival_teams = function(req, res) {
     var me = req.user;
     var teams = db.Team.findAll({
-        where: {LeagueId: req.params.id},
+        where: {LeagueId: req.params.id, special: null},
         include: [ db.User ]
     }).then(function (teams) {
         if(!teams) { return res.sevnd(404); }

@@ -3,9 +3,10 @@ module.exports = function(sequelize, DataTypes) {
         name: DataTypes.STRING,
         latlong: DataTypes.STRING,
         special: {
-            // 'draft' and 'free agency' are virtual teams for transaction purposes.
+            // 'draft', 'waiver', and 'freeagency' are virtual teams that each league has for transaction purposes.
+            // 'commish' is the "team" each league has to represent its commissioners for  transaction approvals, etc.
             type: DataTypes.ENUM,
-            values: ['draft', 'freeagency']
+            values: ['commish','draft', 'freeagency', 'waiver']
         }
     })
 }

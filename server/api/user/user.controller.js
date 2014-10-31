@@ -70,10 +70,10 @@ exports.destroy = function(req, res) {
       user.destroy().then(function(user) {
           return res.send(204);
       }, function(error) {
-          return res.send(500, err);
+          return res.send(500, error);
       });
   }, function(error){
-      return res.send(500, err);
+      return res.send(500, error);
   });
 };
 
@@ -91,13 +91,13 @@ exports.changePassword = function(req, res, next) {
       user.save().then(function() {
         res.send(200);
       },function(error){
-          return validationError(res, err);
+          return validationError(res, error);
       });
     } else {
       res.send(403);
     }
   }, function(error){
-      return res.send(500, err);
+      return res.send(500, error);
   });
 };
 
