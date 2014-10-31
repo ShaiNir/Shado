@@ -24,6 +24,7 @@ if (!global.hasOwnProperty('db')) {
         sequelize: sequelize,
         User:  sequelize.import(__dirname + '/user'),
         League: sequelize.import(__dirname + '/league'),
+        LeagueSetting:  sequelize.import(__dirname + '/league_setting'),
         Team: sequelize.import(__dirname + '/team'),
         Player: sequelize.import(__dirname + '/player'),
         PlayerAssignment: sequelize.import(__dirname + '/player_assignment'),
@@ -42,6 +43,8 @@ if (!global.hasOwnProperty('db')) {
     global.db.League.hasMany(global.db.Team);
     global.db.Team.belongsTo(global.db.League);
     global.db.Team.belongsTo(global.db.Sport);
+
+    global.db.League.hasMany(global.db.LeagueSetting);
 
     global.db.Player.belongsTo(global.db.Sport);
 

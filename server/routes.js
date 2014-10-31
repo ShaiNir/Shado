@@ -12,6 +12,7 @@ module.exports = function(app) {
   app.use('/api/player_assignments', require('./api/player_assignment'));
   app.use('/api/stakes', require('./api/stake'));
   app.use('/api/leagues', require('./api/league'));
+  app.use('/api/league_settings', require('./api/league_setting'));
   app.use('/api/teams', require('./api/team'));
   app.use('/api/players', require('./api/player'));
   app.use('/api/sports', require('./api/sport'));

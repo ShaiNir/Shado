@@ -1,9 +1,8 @@
 'use strict';
 
 var _ = require('lodash');
-var League = require('../models').League;
-var Team = require('../models').Team;
-var User = require('../models').User;
+var db = require('../models');
+var League = db.League;
 
 // Get list of leagues
 exports.index = function(req, res) {
@@ -76,9 +75,9 @@ exports.teams = function(req, res) {
 // Get your rivals' teams in a given league
 exports.rival_teams = function(req, res) {
     var me = req.user;
-    var teams = Team.findAll({
+    var teams = db.Team.findAll({
         where: {LeagueId: req.params.id},
-        include: [ User ]
+        include: [ db.User ]
     }).then(function (teams) {
         if(!teams) { return res.sevnd(404); }
         var filteredTeams = _.select(teams, function(team){
@@ -98,6 +97,21 @@ exports.rival_teams = function(req, res) {
             return teamObject;
         });
         return res.json(teamsWithProfiles);
+    }, function(error){
+        return handleError(res, error);
+    });
+};
+
+// Get the settings of a given league
+// If a setting key is provided, get the setting just for that key
+exports.settings = function(req, res) {
+    var wheres = {LeagueId: req.params.id};
+    if(req.params.key != null){
+        wheres.key = req.params.key;
+    }
+    db.LeagueSetting.findAll({where: wheres}).then(function (settings) {
+        if(!settings) { return res.send(404); }
+        return res.json(settings);
     }, function(error){
         return handleError(res, error);
     });
