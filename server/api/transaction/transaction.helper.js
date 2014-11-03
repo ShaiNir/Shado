@@ -4,6 +4,7 @@ var db = require('../models');
 
 // Creates initial TransactionApproval items for every team involved in the transaction.
 // If there is a user specified that last edited the transaction, that user's approval is automatically accepted.
+// Returns a promise
 exports.createAssetOwnerApprovals = function(transactionId, originTeamId){
     return db.Transaction.find({
         where: {id: transactionId},
@@ -38,5 +39,39 @@ exports.createAssetOwnerApprovals = function(transactionId, originTeamId){
             return approvals;
         });
 
+    });
+};
+
+exports.createCommishApproval = function(transactionId){
+    return db.Transaction.find({
+        where: {id: transactionId},
+        include: [{model: db.League, include:
+            [
+                {model: db.LeagueSetting, where:{key: 'TRADE_COMMISH_AUTO_APPROVE'}, required: false},
+                {model: db.Team, where:{special: 'commish'}}
+            ]
+        }]
+    }).then(function(transaction){
+        var approvalInfo = {
+            role: 'commish',
+            status: 'pending',
+            TransactionId: this.id
+        };
+
+        var commishTeam = transaction.League.Teams[0];
+        if(commishTeam){
+            approvalInfo.TeamId = commishTeam.id;
+        } else {
+            throw new Error('League with ID ' + transaction.LeagueId + ' has no commissioner team!');
+        }
+
+        var trade_auto_approve = transaction.League.LeagueSettings[0];
+        if(trade_auto_approve){
+            approvalInfo.status = 'approved';
+        }
+
+        return db.TransactionApproval.create(approvalInfo).then(function (approval) {
+            return approval;
+        });
     });
 }

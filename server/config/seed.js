@@ -9,6 +9,7 @@ var User = require('../api/models').User;
 User.destroy({},{truncate: true}).then(function(){
   User.bulkCreate([{
     provider: 'local',
+    role: 'manager',
     name: 'Test User',
     email: 'test@test.com',
     password: 'test'
