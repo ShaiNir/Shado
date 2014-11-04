@@ -66,7 +66,7 @@ exports.createCommishApproval = function(transactionId){
         }
 
         var trade_auto_approve = transaction.League.LeagueSettings[0];
-        if(trade_auto_approve){
+        if(trade_auto_approve && trade_auto_approve.value == 'true'){
             approvalInfo.status = 'approved';
         }
 
