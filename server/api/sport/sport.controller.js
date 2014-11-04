@@ -98,6 +98,7 @@ function populateDatabase(players) {
         console.log("Player has salary of " + player.salary);
         console.log("Player contract expires at " + player.contractExpires);
         console.log("Creating player...")
+        Player.findOrCreate(where: {name: player.name})
         callback();
     });
 }
