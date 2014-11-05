@@ -68,19 +68,15 @@ exports.destroy = function(req, res) {
     });
 };
 
-//Populates a sport with the default players.
 exports.populate = function(req, res) {
     Sport.find(req.params.id).then(function (sport) {
         if(!sport) { return res.send(404); }
         var fileStream = fs.createReadStream('mlb_ari.csv')
-//new converter instance
         var csvConverter = new Converter({constructResult:true});
-//end_parsed will be emitted once parsing finished
         csvConverter.on("end_parsed",function(jsonObj){
-           console.log(jsonObj); //here is your result json object
-           populateDatabase(jsonObj)
+           populateDatabase(jsonObj, sport)
         });
-//read from file
+
         fileStream.pipe(csvConverter);
     }, function(error){
         return handleError(res, error);
@@ -91,7 +87,7 @@ function handleError(res, error) {
     return res.send(500, error);
 }
 
-function populateDatabase(players) {
+function populateDatabase(players, sport) {
     console.log("Running populateDatabase");
     async.each(players, function(player, callback) {
         Player.findOrCreate({
@@ -100,7 +96,15 @@ function populateDatabase(players) {
                 salary: player.salary,
                 realWorldTeam: player.realWorldTeam
             }
+        }).success(function(player, created){
+            console.log("This is the then function!");
+            console.log(player.name + " is now ready!")
+            player.setSport(sport);
+            player.save();
         });
+        // .fail(function(err){
+        //     console.log("An error has occurred during populating the player database.");
+        // });
     callback();
     });
 }
