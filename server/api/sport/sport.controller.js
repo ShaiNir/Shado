@@ -94,11 +94,13 @@ function handleError(res, error) {
 function populateDatabase(players) {
     console.log("Running populateDatabase");
     async.each(players, function(player, callback) {
-        console.log("Running on " + player.name);
-        console.log("Player has salary of " + player.salary);
-        console.log("Player contract expires at " + player.contractExpires);
-        console.log("Creating player...")
-        Player.findOrCreate(where: {name: player.name})
-        callback();
+        Player.findOrCreate({
+            where: {
+                name: player.name,
+                salary: player.salary,
+                realWorldTeam: player.realWorldTeam
+            }
+        });
+    callback();
     });
 }
