@@ -71,13 +71,8 @@ exports.destroy = function(req, res) {
 exports.populate = function(req, res) {
     Sport.find(req.params.id).then(function (sport) {
         if(!sport) { return res.send(404); }
-        var fileStream = fs.createReadStream('mlb_ari.csv')
-        var csvConverter = new Converter({constructResult:true});
-        csvConverter.on("end_parsed",function(jsonObj){
-           populateDatabase(jsonObj, sport)
-        });
-
-        fileStream.pipe(csvConverter);
+        parseCsv(sport)
+        return res.send(201, sport);
     }, function(error){
         return handleError(res, error);
     });
@@ -87,24 +82,28 @@ function handleError(res, error) {
     return res.send(500, error);
 }
 
+function parseCsv(sport) {
+    var fileStream = fs.createReadStream('mlb_ari.csv')
+    var csvConverter = new Converter({constructResult:true});
+    csvConverter.on("end_parsed",function(jsonObj){
+        var players = populateDatabase(jsonObj, sport)
+    });
+    fileStream.pipe(csvConverter);
+}
+
 function populateDatabase(players, sport) {
-    console.log("Running populateDatabase");
     async.each(players, function(player, callback) {
         Player.findOrCreate({
             where: {
                 name: player.name,
                 salary: player.salary,
-                realWorldTeam: player.realWorldTeam
+                realWorldTeam: player.realWorldTeam,
+                contractExpires: player.contractExpires
             }
         }).success(function(player, created){
-            console.log("This is the then function!");
-            console.log(player.name + " is now ready!")
             player.setSport(sport);
             player.save();
-        });
-        // .fail(function(err){
-        //     console.log("An error has occurred during populating the player database.");
-        // });
+        })
     callback();
     });
 }
