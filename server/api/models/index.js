@@ -32,7 +32,8 @@ if (!global.hasOwnProperty('db')) {
         Sport: sequelize.import(__dirname + '/sport'),
         Transaction: sequelize.import(__dirname + '/transaction'),
         TransactionItem: sequelize.import(__dirname + '/transaction_item'),
-        TransactionApproval: sequelize.import(__dirname + '/transaction_approval')
+        TransactionApproval: sequelize.import(__dirname + '/transaction_approval'),
+        Message: sequelize.import(__dirname + '/message')
     }
 
     /*
@@ -63,6 +64,10 @@ if (!global.hasOwnProperty('db')) {
     global.db.TransactionItem.belongsTo(global.db.Team, {as: 'destination'});
 
     global.db.TransactionApproval.belongsTo(global.db.Team);
+
+    global.db.Message.belongsTo(global.db.Team, {as: 'sender'});
+    global.db.Message.belongsTo(global.db.Team, {as: 'recipient'});
+    global.db.Message.belongsTo(global.db.League);
 }
 
 module.exports = global.db
