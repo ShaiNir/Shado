@@ -3,6 +3,7 @@ module.exports = function(sequelize, DataTypes) {
         status: {
             type: DataTypes.ENUM,
             values: ["active","inactive"]
-        }
+        },
+        salary: DataTypes.INTEGER
     })
 }
