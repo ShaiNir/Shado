@@ -30,9 +30,10 @@ exports.show = function(req, res) {
     });
 };
 
-// Creates a new sport in the DB.
+// Creates a new sport in the DB and populate it with players via parsing csv files.
 exports.create = function(req, res) {
     Sport.create(req.body).then(function(sport){
+        populate(sport)
         return res.json(201, sport);
     },function(error) {
         return handleError(res, error);
@@ -68,25 +69,15 @@ exports.destroy = function(req, res) {
     });
 };
 
-exports.populate = function(req, res) {
-    Sport.find(req.params.id).then(function (sport) {
-        if(!sport) { return res.send(404); }
-        parseCsv(sport)
-        return res.send(201, sport);
-    }, function(error){
-        return handleError(res, error);
-    });
-}
-
 function handleError(res, error) {
     return res.send(500, error);
 }
 
-function parseCsv(sport) {
+function populate(sport) {
     var fileStream = fs.createReadStream('mlb_ari.csv')
     var csvConverter = new Converter({constructResult:true});
     csvConverter.on("end_parsed",function(jsonObj){
-        var players = populateDatabase(jsonObj, sport)
+        populateDatabase(jsonObj, sport)
     });
     fileStream.pipe(csvConverter);
 }
