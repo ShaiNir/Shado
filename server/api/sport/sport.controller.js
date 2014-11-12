@@ -10,8 +10,6 @@ var Player = require('../models').Player;
 var async = require('async')
 var path = require('path')
 
-
-
 // Get list of sports
 exports.index = function(req, res) {
     Sport.findAll().then(function (sports) {
@@ -84,44 +82,51 @@ function handleError(res, error) {
     return res.send(500, error);
 }
 
+//csv's go into a directory in the root folder called 'default_players'.
+//Each csv is (currently) a list of players with the following details,
+// in no particular order: 'name', 'contractExpires', 'realWorldTeam',
+// 'salary'. Capitalization is important for the table names. For
+// contractExpires, use a date format. -Sammy
 function parseCsv(sport) {
-    var directory = './default_players'
+    var directory = "./default_players"
     fs.readdir(directory, function(err, files) {
         if (!files.length) {
-            return console.log("No files found in default_players");
+            return logger.log("No files found in default_players");
         }
-        async.map(files, function(file, callback) {
-            path.join(drectory, file);
+        var csvPaths = files.map(function(file) {
+            return path.join(directory, file);
+            });
+        async.map(csvPaths, function(file, callback) {
             var fileStream = fs.createReadStream(file);
             var csvConverter = new Converter({constructResult:true});
             csvConverter.on("end_parsed",function(jsonObj){
-                var players = populateDatabase(jsonObj, sport);
+                populateDatabase(jsonObj, sport);
             });
         fileStream.pipe(csvConverter);
         callback();
         });
+    }, function(error){
+        logger.log("There was an error in reading the directory.");
     });
 }
 
 function populateDatabase(players, sport) {
     async.each(players, function(player, callback) {
-        Player.findOrCreate({
+        var promise = Player.findOrCreate({
             where: {
                 name: player.name,
                 salary: player.salary,
                 realWorldTeam: player.realWorldTeam,
                 contractExpires: player.contractExpires
             }
-        }).success(function(player, created){
+        });
+        promise.success(function(player, created){
             player.setSport(sport);
             player.save();
-        })
-    callback();
-    }, function(err){
-        if(err) {
-            console.log("Failed to process a player");
-        } else {
-            console.log("Successfully processed all players.");
-        }
+        });
+        promise.error(function(err){
+            logger.log("Failed to process player: " + player.name);
+        });
+        callback();
     });
 }
