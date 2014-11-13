@@ -13,7 +13,7 @@ module.exports = function(sequelize, DataTypes) {
             type: DataTypes.STRING,
             unique: true,
             validate: {
-                notBlank: function(email){
+                notBlank: function (email) {
                     if (authTypes.indexOf(this.provider) == -1) {
                         if (!validatePresenceOf(email)) {
                             throw new Error('Email cannot be blank')
@@ -24,7 +24,7 @@ module.exports = function(sequelize, DataTypes) {
         },
         role: {
             type: DataTypes.ENUM,
-            values: ["admin","commish","gm","manager"]
+            values: ["admin", "commish", "gm", "manager"]
         },
         franchiseName: DataTypes.STRING,
         budget: DataTypes.INTEGER,
@@ -38,13 +38,17 @@ module.exports = function(sequelize, DataTypes) {
                         }
                     }
                 }
-            }
+            },
+            get: function () { return null }
         },
         provider: {
             type: DataTypes.ENUM,
-            values: ["local","github","google","facebook","twitter"]
+            values: ["local", "github", "google", "facebook", "twitter"]
         },
-        salt: DataTypes.STRING,
+        salt: {
+            type: DataTypes.STRING,
+            get: function () { return null }
+        },
         facebook: DataTypes.STRING,
         twitter: DataTypes.STRING,
         google: DataTypes.STRING,
@@ -81,7 +85,7 @@ module.exports = function(sequelize, DataTypes) {
              * @api public
              */
             authenticate: function(plainText) {
-                return this.encryptPassword(plainText) === this.hashedPassword;
+                return this.encryptPassword(plainText) === this.getDataValue('hashedPassword');
             },
 
             /**
@@ -102,8 +106,8 @@ module.exports = function(sequelize, DataTypes) {
              * @api public
              */
             encryptPassword: function(password) {
-                if (!password || !this.salt) return '';
-                var salt = new Buffer(this.salt, 'base64');
+                if (!password || !this.getDataValue('salt')) return '';
+                var salt = new Buffer(this.getDataValue('salt'), 'base64');
                 return crypto.pbkdf2Sync(password, salt, 10000, 64).toString('base64');
             }
         }
