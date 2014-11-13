@@ -65,7 +65,7 @@ var setUpSimpleTrade = function(done){
     });
 }
 
-describe('Transaction Model', function() {
+describe('Transaction Helper', function() {
     beforeEach(function(done) {
         // Clear db before testing
         db.TransactionItem.destroy({},{truncate: true}).then(function() {

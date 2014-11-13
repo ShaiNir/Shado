@@ -19,6 +19,7 @@ module.exports = function(app) {
   app.use('/api/sports', require('./api/sport'));
   app.use('/api/users', require('./api/user'));
   app.use('/api/transactions', require('./api/transaction'));
+  app.use('/api/messages', require('./api/message'));
 
   app.use('/auth', require('./auth'));
   

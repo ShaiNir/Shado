@@ -6,7 +6,7 @@
 'use strict';
 var User = require('../api/models').User;
 
-User.destroy({},{truncate: true}).then(function(){
+User.destroy({where:['email in (?,?)','test@test.com','admin@admin.com']},{truncate: true}).then(function(){
   User.bulkCreate([{
     provider: 'local',
     role: 'manager',

@@ -66,8 +66,8 @@ if (!global.hasOwnProperty('db')) {
     global.db.TransactionApproval.belongsTo(global.db.Team);
 
     global.db.Message.belongsTo(global.db.Team, {as: 'sender'});
-    global.db.Message.belongsTo(global.db.Team, {as: 'recipient'});
-    global.db.Message.belongsTo(global.db.League);
+    global.db.Message.belongsTo(global.db.Team, {as: 'recipient'}); // Used for messages to specific teams
+    global.db.Message.belongsTo(global.db.League); // Only used for league-wide messages
 }
 
 module.exports = global.db

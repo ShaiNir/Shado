@@ -3,7 +3,7 @@ if (!global.hasOwnProperty('logger')) {
     global.logger = new (winston.Logger)({
         transports: [
             new (winston.transports.Console)(),
-            new (winston.transports.File)({ filename: __dirname + '/error.log', level: 'error'})
+            new (winston.transports.File)({ filename: __dirname + '/' + process.env.NODE_ENV + '.log', level: 'info'})
         ]
     });
 }
