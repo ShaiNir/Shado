@@ -55,6 +55,7 @@ if (!global.hasOwnProperty('db')) {
     global.db.User.hasMany(global.db.Team, {through: global.db.Stake});
     global.db.Team.hasMany(global.db.User, {through: global.db.Stake});
 
+    global.db.Transaction.belongsTo(global.db.Transaction, {as: 'series'});
     global.db.Transaction.belongsTo(global.db.League);
     global.db.Transaction.hasMany(global.db.TransactionApproval);
 
