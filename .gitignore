@@ -4,4 +4,6 @@ public
 .sass-cache
 client/bower_components
 dist
+default_players
+test_csv
 /server/config/local.env.js

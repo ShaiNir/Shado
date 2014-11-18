@@ -1,0 +1,6 @@
+name,salary,realWorldTeam,contractExpires,Comments
+Rodger Umaechi,3000000,ALB,01/11/2020,Base
+Lance Wildfyre,,,01/11/2020,Missing Data
+Carlos Santiviera,3000000,ALB,2020,Incorrect Format (date -> number)
+123,3000000,ALB,01/11/2020,Incorrect Format (string -> number)
+Carl Esteban,3000000,ALB,01/12/2020,Incorrect Date

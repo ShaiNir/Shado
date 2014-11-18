@@ -5,10 +5,11 @@ var Sport = require('../models').Sport;
 var fs = require('fs')
 var output = []
 
-var Converter=require('csvtojson').core.Converter;
+var logger = require('../../logger');
+var Converter = require('csvtojson').core.Converter;
 var Player = require('../models').Player;
-var async = require('async')
-var path = require('path')
+var async = require('async');
+var path = require('path');
 
 // Get list of sports
 exports.index = function(req, res) {
@@ -86,12 +87,12 @@ function handleError(res, error) {
 //Each csv is (currently) a list of players with the following details,
 // in no particular order: 'name', 'contractExpires', 'realWorldTeam',
 // 'salary'. Capitalization is important for the table names. For
-// contractExpires, use a date format. -Sammy
+// contractExpires, use a date format. -Sammy 18/11/14.
 function parseCsv(sport) {
     var directory = "./default_players"
     fs.readdir(directory, function(err, files) {
         if (!files.length) {
-            return logger.log("No files found in default_players");
+            return logger.log("error", "No files found in default_players");
         }
         var csvPaths = files.map(function(file) {
             return path.join(directory, file);
@@ -106,7 +107,7 @@ function parseCsv(sport) {
         callback();
         });
     }, function(error){
-        logger.log("There was an error in reading the directory.");
+        logger.log("error", "There was an error in reading the directory.");
     });
 }
 
@@ -125,7 +126,7 @@ function populateDatabase(players, sport) {
             player.save();
         });
         promise.error(function(err){
-            logger.log("Failed to process player: " + player.name);
+            logger.log("error", "Failed to process player: " + player.name);
         });
         callback();
     });
