@@ -35,5 +35,10 @@ db.sequelize.sync().complete(function(err) {
     }
 })
 
+if(config.schedulerOn) {
+    var scheduler = require('./components/scheduler');
+    scheduler.start();
+}
+
 // Expose app
 exports = module.exports = app;

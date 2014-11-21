@@ -21,8 +21,17 @@ var all = {
   // Server port
   port: process.env.PORT || 9000,
 
+  // db credentials
+  dbCreds: {db: 'shado', user: 'shado', dialect: 'postgres'},
+
   // Should we populate the DB with sample data?
   seedDB: false,
+
+  // Should the scheduler be running?
+  schedulerOn: true,
+
+  // How often the league events scheduler should tick (in milliseconds).
+  schedulerFrequency: 1000 * 30, // 30 seconds
 
   // Secret for session, you will want to change this and make it an environment variable
   secrets: {

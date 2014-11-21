@@ -2,6 +2,9 @@ if (!global.hasOwnProperty('db')) {
     var Sequelize = require('sequelize')
         , sequelize = null
 
+    var env = require('../../config/environment');
+    var dbCreds = env.dbCreds;
+
     if (process.env.HEROKU_POSTGRESQL_BRONZE_URL) {
         // the application is executed on Heroku ... use the postgres database
         var match = process.env.HEROKU_POSTGRESQL_BRONZE_URL.match(/postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/)
@@ -11,12 +14,10 @@ if (!global.hasOwnProperty('db')) {
             protocol: 'postgres',
             port:     match[4],
             host:     match[3],
-            logging:  true //false
+            logging:  true
         })
-    } else if(process.env.NODE_ENV == 'test') {
-        sequelize =  new Sequelize('shadotest', 'shado', null, {dialect: 'postgres'});
     } else {
-        sequelize =  new Sequelize('shado', 'shado', null, {dialect: 'postgres'});
+        sequelize =  new Sequelize(dbCreds.db, dbCreds.user, null, {dialect: dbCreds.dialect});
     }
 
     global.db = {
@@ -33,7 +34,8 @@ if (!global.hasOwnProperty('db')) {
         Transaction: sequelize.import(__dirname + '/transaction'),
         TransactionItem: sequelize.import(__dirname + '/transaction_item'),
         TransactionApproval: sequelize.import(__dirname + '/transaction_approval'),
-        Message: sequelize.import(__dirname + '/message')
+        Message: sequelize.import(__dirname + '/message'),
+        LeagueEvent: sequelize.import(__dirname + '/league_event')
     }
 
     /*
@@ -69,6 +71,8 @@ if (!global.hasOwnProperty('db')) {
     global.db.Message.belongsTo(global.db.Team, {as: 'sender'});
     global.db.Message.belongsTo(global.db.Team, {as: 'recipient'}); // Used for messages to specific teams
     global.db.Message.belongsTo(global.db.League); // Only used for league-wide messages
+
+    global.db.LeagueEvent.belongsTo(global.db.League);
 }
 
 module.exports = global.db
