@@ -36,8 +36,7 @@ var setUpLeague= function(done){
     });
 };
 
-
-describe('Team Helper', function() {
+describe('Validate Roster For Team', function() {
     beforeEach(function(done) {
         // Clear db before testing
         db.Team.destroy({},{truncate: true}).then(function() {
@@ -53,7 +52,7 @@ describe('Team Helper', function() {
 
     it('should return an empty array if there are no limits', function(done){
         setUpLeague(function(su) {
-            var validations = TeamHelper.validateRoster(su.team.id).then(function(validations){
+            TeamHelper.validateRosterForTeam(su.team.id).then(function(validations){
                 validations.should.be.instanceof(Array);
                 validations.length.should.equal(0);
                 done();
@@ -71,7 +70,7 @@ describe('Team Helper', function() {
                 {LeagueId: su.league.id, key: 'ROSTER_CAP', value: 3}
             ]
             db.LeagueSetting.bulkCreate(settings).then(function(leagueSettings){
-                var validations = TeamHelper.validateRoster(su.team.id).then(function(validations){
+                TeamHelper.validateRosterForTeam(su.team.id).then(function(validations){
                     validations.should.be.instanceof(Array);
                     validations.length.should.equal(0);
                     done();
@@ -87,7 +86,7 @@ describe('Team Helper', function() {
                 {LeagueId: su.league.id, key: 'ROSTER_CAP', value: 1}
             ]
             db.LeagueSetting.bulkCreate(settings).then(function(leagueSettings){
-                var validations = TeamHelper.validateRoster(su.team.id).then(function(validations){
+                TeamHelper.validateRosterForTeam(su.team.id).then(function(validations){
                     validations.should.be.instanceof(Array);
                     validations.length.should.equal(1);
                     validations[0].should.equal(TeamHelper.messages.TOO_MANY_PLAYERS);
@@ -103,7 +102,7 @@ describe('Team Helper', function() {
                 {LeagueId: su.league.id, key: 'SALARY_HARD_CAP', value: 9000}
             ]
             db.LeagueSetting.bulkCreate(settings).then(function(leagueSettings){
-                var validations = TeamHelper.validateRoster(su.team.id).then(function(validations){
+                TeamHelper.validateRosterForTeam(su.team.id).then(function(validations){
                     validations.should.be.instanceof(Array);
                     validations.length.should.equal(1);
                     validations[0].should.equal(TeamHelper.messages.HARD_CAP);
@@ -117,7 +116,7 @@ describe('Team Helper', function() {
         setUpLeague(function(su) {
             su.team.budget = 8000;
             su.team.save().then(function(team){
-                var validations = TeamHelper.validateRoster(su.team.id).then(function(validations){
+                TeamHelper.validateRosterForTeam(su.team.id).then(function(validations){
                     validations.should.be.instanceof(Array);
                     validations.length.should.equal(1);
                     validations[0].should.equal(TeamHelper.messages.BUDGET);
@@ -134,12 +133,52 @@ describe('Team Helper', function() {
                 {LeagueId: su.league.id, key: 'SALARY_SOFT_CAP_TAX_PERCENT', value: 100}
             ]
             db.LeagueSetting.bulkCreate(settings).then(function(leagueSettings){
-                var validations = TeamHelper.validateRoster(su.team.id).then(function(validations){
+                TeamHelper.validateRosterForTeam(su.team.id).then(function(validations){
                     validations.should.be.instanceof(Array);
                     validations.length.should.equal(1);
                     validations[0].should.equal(TeamHelper.messages.BUDGET_WITH_TAX);
                     done();
                 });
+            });
+        });
+    });
+});
+
+
+describe('getAutoPurgedPlayers', function() {
+    beforeEach(function(done) {
+        // Clear db before testing
+        db.Team.destroy({},{truncate: true}).then(function() {
+            db.Player.destroy({},{truncate: true}).then(function() {
+                db.LeagueSetting.destroy({},{truncate: true}).then(function() {
+                    db.League.destroy({},{truncate: true}).then(function() {
+                        done();
+                    });
+                });
+            });
+        });
+    });
+
+    it('should return the highest-paid player if the team is over its limit', function(done){
+        setUpLeague(function(su) {
+            var settings = [
+                {LeagueId: su.league.id, key: 'SALARY_HARD_CAP', value: 9000}
+            ]
+            db.LeagueSetting.bulkCreate(settings).then(function(){
+                db.Team.find({
+                    where: {id: su.team.id},
+                    include:  [
+                        {model: db.League, include: [{model: db.LeagueSetting, required: false}]},
+                        {model: db.Player}
+                    ]
+                }).then(function(team){
+                    var playerList = TeamHelper.getAutoPurgedPlayers(team);
+                    playerList.should.be.instanceOf(Array);
+                    playerList.length.should.equal(1);
+                    playerList[0].should.equal(su.player1.id);
+                    done();
+                });
+
             });
         });
     });

@@ -9,6 +9,11 @@ var VALIDATION_MESSAGES = {
     HARD_CAP: "This team's total salary is higher than the league hard salary cap."
 }
 
+var TEAM_VALIDATION_INCLUDES = [
+    {model: db.League, include: [{model: db.LeagueSetting, required: false}]},
+    {model: db.Player}
+];
+
 exports.messages = VALIDATION_MESSAGES;
 
 // List of validations to be run.
@@ -52,26 +57,59 @@ var ROSTER_VALIDATIONS = [
 ];
 
 /**
- * Given a team ID, calculate whether the team can accommodate its roster given
- * its current budget and league salary limits. Returns a promise which returns
- * an empty array if valid or an array of reasons why the roster is invalid.
+ * Given a team, calculate whether the team can accommodate its roster given
+ * its current budget and league salary limits.
+ * Returns an empty array if valid or an array of reasons why the roster is invalid.
  */
-exports.validateRoster = function(teamId, amount){
+var validateRoster = function(team){
+    var totalSalary = _.reduce(team.Players, function(sum, player){
+        if(player.PlayerAssignment.salary != null) {
+            return sum + player.PlayerAssignment.salary
+        }
+    },0);
+    return _.reduce(ROSTER_VALIDATIONS, function(errors,validation){
+        var failures = validation(team, totalSalary);
+        return errors.concat(failures);
+    },[]);
+};
+
+/**
+ * Given a team ID, calculate whether the team can accommodate its roster given
+ * its current budget and league salary limits.
+ * Returns a promise which returns an empty array if valid or an array of
+ * reasons why the roster is invalid.
+ */
+exports.validateRosterForTeam = function(teamId){
     return db.Team.find({
         where: {id: teamId},
-        include:  [
-                {model: db.League, include: [{model: db.LeagueSetting, required: false}]},
-                {model: db.Player}
-        ]
+        include:  TEAM_VALIDATION_INCLUDES
     }).then(function(team){
-        var totalSalary = _.reduce(team.Players, function(sum, player){
-            if(player.PlayerAssignment.salary != null) {
-                return sum + player.PlayerAssignment.salary
-            }
-        },0);
-        return _.reduce(ROSTER_VALIDATIONS, function(errors,validation){
-            var failures = validation(team, totalSalary);
-            return errors.concat(failures);
-        },[]);
+        return validateRoster(team);
     });
+};
+
+// Check whether the given team's roster is above its league's theshold.
+// Requires TEAM_VALIDATION_INCLUDES.
+var rosterInvalid = function(team){
+   return  _.intersection(_.values(VALIDATION_MESSAGES), validateRoster(team)).length > 0;
 }
+
+/**
+ * Given a team Id, looks up the team and calculates whether its roster violates league limits.
+ * If it does, virtually kicks players off the team until the roster fits within those limits.
+ * Players are considered for removal in order of highest salary first.
+ * This method does not make any changes itself; it just returns a list of players to be removed.
+ * @param actualTeam The team to be reduced. Requires TEAM_VALIDATION_INCLUDES.
+ */
+exports.getAutoPurgedPlayers = function(actualTeam){
+    // Convert team from sequelize model to plain old object so it can be manipulated without DB changes
+    var team = JSON.parse(JSON.stringify(actualTeam));
+    // Sort team's player by ascending salary
+    team.Players = _.sortBy(team.Players, function(player){return player.PlayerAssignment.salary})
+    var playersToPurge = [];
+    while(team.Players.length > 0 && rosterInvalid(team)) {
+        var highestSalaryPlayer = team.Players.pop();
+        playersToPurge.push(highestSalaryPlayer.id);
+    }
+    return playersToPurge;
+};
