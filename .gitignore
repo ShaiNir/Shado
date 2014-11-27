@@ -1,7 +1,9 @@
 node_modules
 public
+npm-debug.log
 .tmp
 .sass-cache
+.csv
 client/bower_components
 dist
 /server/config/local.env.js

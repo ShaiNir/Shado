@@ -2,6 +2,14 @@
 
 var _ = require('lodash');
 var Sport = require('../models').Sport;
+var fs = require('fs')
+var output = []
+
+var Converter=require('csvtojson').core.Converter;
+var Player = require('../models').Player;
+var async = require('async')
+
+
 
 // Get list of sports
 exports.index = function(req, res) {
@@ -22,9 +30,10 @@ exports.show = function(req, res) {
     });
 };
 
-// Creates a new sport in the DB.
+// Creates a new sport in the DB and populate it with players via parsing csv files.
 exports.create = function(req, res) {
     Sport.create(req.body).then(function(sport){
+        populate(sport)
         return res.json(201, sport);
     },function(error) {
         return handleError(res, error);
@@ -62,4 +71,30 @@ exports.destroy = function(req, res) {
 
 function handleError(res, error) {
     return res.send(500, error);
+}
+
+function populate(sport) {
+    var fileStream = fs.createReadStream('mlb_ari.csv')
+    var csvConverter = new Converter({constructResult:true});
+    csvConverter.on("end_parsed",function(jsonObj){
+        populateDatabase(jsonObj, sport)
+    });
+    fileStream.pipe(csvConverter);
+}
+
+function populateDatabase(players, sport) {
+    async.each(players, function(player, callback) {
+        Player.findOrCreate({
+            where: {
+                name: player.name,
+                salary: player.salary,
+                realWorldTeam: player.realWorldTeam,
+                contractExpires: player.contractExpires
+            }
+        }).success(function(player, created){
+            player.setSport(sport);
+            player.save();
+        })
+    callback();
+    });
 }
