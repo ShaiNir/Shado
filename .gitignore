@@ -5,6 +5,6 @@ public
 client/bower_components
 dist
 default_players
-test_csv
+test_csv/*.csv
 .log
 /server/config/local.env.js

@@ -8,7 +8,6 @@ var output = []
 var logger = require('../../logger');
 var Converter = require('csvtojson').core.Converter;
 var Player = require('../models').Player;
-var async = require('async');
 var path = require('path');
 
 // Get list of sports
@@ -85,8 +84,8 @@ function handleError(res, error) {
 
 //csv's go into a directory in the root folder called 'default_players'.
 //Each csv is (currently) a list of players with the following details,
-// in no particular order: 'name', 'contractExpires', 'realWorldTeam',
-// 'salary'. Capitalization is important for the table names. For
+// in no particular order: 'playerName', 'contractExpires', 'realWorldTeam',
+// 'defaultSalary'. Capitalization is important for the table names. For
 // contractExpires, use a date format. -Sammy 18/11/14.
 function parseCsv(sport) {
     var directory = "./default_players"
@@ -115,8 +114,8 @@ function populateDatabase(players, sport) {
     async.each(players, function(player, callback) {
         var promise = Player.findOrCreate({
             where: {
-                name: player.name,
-                salary: player.salary,
+                name: player.playerName,
+                defaultSalary: player.defaultSalary,
                 realWorldTeam: player.realWorldTeam,
                 contractExpires: player.contractExpires
             }
