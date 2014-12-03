@@ -8,6 +8,7 @@ var output = []
 var logger = require('../../logger');
 var Converter = require('csvtojson').core.Converter;
 var Player = require('../models').Player;
+var async = require('async');
 var path = require('path');
 
 // Get list of sports

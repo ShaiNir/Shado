@@ -6,7 +6,6 @@ var Converter = require('csvtojson').core.Converter;
 var db = require('../server/api/models');
 var Sport = db.Sport;
 var Player = db.Player;
-var async = require('async');
 var fs = require('fs')
 
 var Populate = function(){
