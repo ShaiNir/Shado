@@ -86,8 +86,6 @@ describe('GET /api/leagues/:id/teams', function() {
     });
 });
 
-
-
 describe('GET /api/leagues/:id/rival_teams', function() {
     var loginToken;
 
@@ -156,4 +154,63 @@ describe('GET /api/leagues/:id/rival_teams', function() {
                 done();
             });
     });
+});
+
+/*
+Written by Sammy on 03/12/14
+*/
+
+describe('GET /api/leagues/:id/populate', function() {
+
+    beforeEach(function(done) {
+        // Clear db before testing
+        db.League.destroy({},{truncate: true}).success(function() {
+            db.Team.destroy({},{truncate: true}).success(function() {
+            });
+        });
+        db.League.create({
+            name: 'Test League',
+            id: 1
+        }).success(function(league1){
+            for(var teamNumber = 1; teamNumber < 21; teamNumber ++) {
+                db.Team.create({
+                    name: 'Team ' + teamNumber,
+                }).success(function(team) {
+                    team.setLeague(league1);
+                    team.save();
+                });
+            }
+            db.Team.create({
+                name: 'Commish Team',
+                special: {type: 'commish'}
+            }).success(function(team) {
+                team.setLeague(league1);
+                team.save();
+            });
+            db.Team.create({
+                name: 'Free Agency Team',
+                special: {type: 'freeagency'}
+            }).success(function(team) {
+                team.setLeague(league1);
+                team.save();
+            });
+            done();
+        })
+
+    });
+
+    it('should have created a league', function(done) {
+        db.League.find(1).then(function() {
+            done();
+        });
+    });
+
+    it('should have made 22 teams', function(done) {
+        db.Team.findAndCountAll([
+        ]).success(function(result) {
+            result.count.should.equal(22);
+            done();
+        });
+    });
+
 });
