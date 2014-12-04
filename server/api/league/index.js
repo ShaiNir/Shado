@@ -13,8 +13,10 @@ router.get('/:id/rival_teams', auth.isAuthenticated(), controller.rival_teams);
 router.get('/:id/settings', controller.settings);
 router.get('/:id/settings/:key', controller.settings);
 router.post('/', controller.create);
+router.post('/:id/populate', controller.populate, auth.isAuthenticated());
 router.put('/:id', controller.update);
 router.patch('/:id', controller.update);
 router.delete('/:id', controller.destroy);
+
 
 module.exports = router;

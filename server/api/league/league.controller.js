@@ -3,6 +3,9 @@
 var _ = require('lodash');
 var db = require('../models');
 var League = db.League;
+var logger = require('../../logger')
+
+var teamArray = []
 
 // Get list of leagues
 exports.index = function(req, res) {
@@ -117,7 +120,83 @@ exports.settings = function(req, res) {
     });
 };
 
+exports.populate = function(req, res) {
+  var user = req.user;
+  if (user.role !== admin) {
+    logger.log("error", "Populating league is restricted to admins only");
+    return res.send (401);
+  }
+  League.find(req.params.id).then(function (league) {
+    if (!league) {
+      return res.send(404);
+    }
+    populateLeague(league);
+    return res.send(204, league);
+    }, function(error) {
+      return handleError(res, error);
+    });
+};
 
 function handleError(res, error) {
   return res.send(500, error);
+}
+
+/**
+* Created by Sammy on 12/3/14
+**/
+
+function populateLeague(league) {
+  var commishTeam = {
+    name: 'Commisioner Team',
+    special: 'commish',
+    LeagueId: league.id,
+  };
+
+  var freeAgencyTeam = {
+    name: 'Free Agency Team',
+    special: 'freeagency',
+    LeagueId: league.id,
+  };
+
+  var userTeams = [
+    "Springfield Isotopes",
+    "Havana Capitals",
+    "Cheyenne Jacksonholes",
+    "Las Vegas Leprechauns",
+    "Flint Tropics",
+    "Louisville Sluggers",
+    "Yeehaw Junction Asi-Yaholas",
+    "Ashville Robots",
+    "Boulder Buttresses",
+    "Biloxi Boomerangs",
+    "Worcester Rockets",
+    "Eire Egotists",
+    "Calgary Cannons",
+    "Hicksville Hobos",
+    "Austin Normals",
+    "Dallas Diamond Dogs",
+    "Caguas Cauda Equinas",
+    "Mexico Charros",
+    "Portland Trailfollowers",
+    "Walla Walla Krustys"
+  ]
+
+  _(userTeams).forEach(function(teamName) {
+    teamArray.push({
+      name: teamName,
+      LeagueId: league.id
+    });
+  });
+  teamArray.push(commishTeam, freeAgencyTeam);
+  createTeams(teamArray);
+}
+
+function createTeams(teamArray) {
+  db.Team
+      .bulkCreate(teamArray)
+    .success(function() {
+      logger.log("info", "Suceeded in populating league");
+    }).error(function(err) {
+      logger.log("error", "Failure to populate league")
+    })
 }

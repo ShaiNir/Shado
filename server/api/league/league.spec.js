@@ -5,6 +5,9 @@ var request = require('supertest');
 var testUtil = require('../../components/test-util.js');
 var db = require('../models');
 var app =  require('../../app');
+var logger = require('../../logger')
+
+var leagueTest = require('../../components/league_test.js');
 
 db.sequelize.sync();
 
@@ -86,8 +89,6 @@ describe('GET /api/leagues/:id/teams', function() {
     });
 });
 
-
-
 describe('GET /api/leagues/:id/rival_teams', function() {
     var loginToken;
 
@@ -155,5 +156,75 @@ describe('GET /api/leagues/:id/rival_teams', function() {
                 (typeof res.body[0].Users[0].hashedPassword === 'undefined').should.be.true;
                 done();
             });
+    });
+});
+
+/*
+Written by Sammy on 12/03/14
+*/
+
+describe('GET /api/leagues/:id/populate', function() {
+    var account1 = {
+        email: 'test1@test.com',
+        password: 'test',
+        role: 'admin'
+    };
+    var account2 = {
+        email: 'test2@test.com',
+        password: 'testing',
+        role: 'commish'
+    };
+    before(function(done) {
+        // Clear db before testing
+        db.User.destroy({}, {truncate: true}).success(function() {
+            db.League.destroy({},{truncate: true}).success(function() {
+                db.Team.destroy({},{truncate: true}).success(function() {
+                    done();
+                });
+            });
+        })
+    });
+
+    before(function(done) {
+        db.User.create(account1).success(function(adminUser) {
+            leagueTest.fillLeague(adminUser);
+        });
+        done();
+    })
+
+    it('should have created a league', function(done) {
+        db.League.find().then(function(league) {
+            done();
+        });
+    });
+
+    it('should have made 22 teams', function(done) {
+        db.Team.findAndCountAll().then(function(result) {
+            result.count.should.equal(22);
+            done();
+        });
+    });
+
+    it('should have found a team with commish special type', function(done) {
+        db.Team.find({where: {special: "commish"}
+        }).success(function(team) {
+            done();
+        });
+    });
+
+    it('should have found a team with freeagency special type', function(done) {
+        db.Team.find({where: {special: "freeagency"}
+        }).success(function(team) {
+            done();
+        });
+    });
+
+    it('should only allow adminUser to send and complete the request', function(done) {
+        db.User.create(account2).success(function(commishUser) {
+            leagueTest.fillLeague(commishUser);
+        }).then(function () {
+            should(true).ok
+            done();
+        });
     });
 });
