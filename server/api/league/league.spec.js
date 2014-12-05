@@ -200,6 +200,7 @@ describe('GET /api/leagues/:id/populate', function() {
 
     it('should have created a league', function(done) {
         db.League.find(1).then(function() {
+        }).success(function() {
             done();
         });
     });
@@ -212,4 +213,17 @@ describe('GET /api/leagues/:id/populate', function() {
         });
     });
 
+    it('should have found a team with commish special type', function(done) {
+        db.Team.find({where: {special: "commish"}
+        }).success(function(teams) {
+            done();
+        });
+    });
+
+    it('should have found a team with freeagency special type', function(done) {
+        db.Team.find({where: {special: "freeagency"}
+        }).success(function(teams) {
+            done();
+        });
+    });
 });
