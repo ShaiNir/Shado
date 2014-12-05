@@ -182,21 +182,20 @@ describe('GET /api/leagues/:id/populate', function() {
             }
             db.Team.create({
                 name: 'Commish Team',
-                special: {type: 'commish'}
+                special: 'commish'
             }).success(function(team) {
                 team.setLeague(league1);
                 team.save();
             });
             db.Team.create({
                 name: 'Free Agency Team',
-                special: {type: 'freeagency'}
+                special: 'freeagency'
             }).success(function(team) {
                 team.setLeague(league1);
                 team.save();
             });
             done();
         })
-
     });
 
     it('should have created a league', function(done) {
