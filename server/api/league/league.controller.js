@@ -117,7 +117,46 @@ exports.settings = function(req, res) {
     });
 };
 
+exports.populate = function(req, res) {
+  League.find(req.params.id).then(function (league) {
+    if(!league) { return res.send(404); }
+    populate(league);
+  }, function(error){
+    return handleError(res, error);
+  });
+};
 
 function handleError(res, error) {
   return res.send(500, error);
 }
+
+function populate(league) {
+  for(var teamNumber = 1; teamNumber < 21; teamNumber ++) {
+    db.Team.create({
+      name: 'Team ' + teamNumber,
+    }).success(function(team) {
+      team.setLeague(league);
+      team.save();
+    }).error(function(err) {
+      logger.log("error", "Failed to create user team " + teamNumber);
+    });
+  };
+  db.Team.create({
+    name: 'Commisioner Team',
+    special: 'commish'
+  }).success(function(team) {
+    team.setLeague(league);
+    team.save();
+  }).error(function(err) {
+    logger.log("error", "Failed to commisioner team");
+  });
+  db.Team.create({
+    name: 'Free Agency Team',
+    special: 'freeagency'
+  }).success(function(team) {
+    team.setLeague(league);
+    team.save();
+  }).error(function(err) {
+    logger.log("error", "Failed to create free agency team");
+  });
+};

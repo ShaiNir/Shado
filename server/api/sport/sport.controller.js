@@ -126,7 +126,7 @@ function populateDatabase(players, sport) {
             player.save();
         });
         promise.error(function(err){
-            logger.log("error", "Failed to process player: " + player.name);
+            logger.log("error", "Failed to process player: " + player.playerName);
         });
         callback();
     });
