@@ -120,10 +120,11 @@ exports.settings = function(req, res) {
 exports.populate = function(req, res) {
   League.find(req.params.id).then(function (league) {
     if(!league) { return res.send(404); }
-    populate(league);
-  }, function(error){
-    return handleError(res, error);
-  });
+    populate(league)
+    return res.send(204, league);
+    }, function(error) {
+      return handleError(res, error);
+    });
 };
 
 function handleError(res, error) {
