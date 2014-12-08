@@ -118,8 +118,14 @@ exports.settings = function(req, res) {
 };
 
 exports.populate = function(req, res) {
+  var user = req.user;
+  if (user.role !== admin) {
+    return res.send (403);
+  }
   League.find(req.params.id).then(function (league) {
-    if(!league) { return res.send(404); }
+    if (!league) {
+      return res.send(404);
+    }
     populate(league)
     return res.send(204, league);
     }, function(error) {
