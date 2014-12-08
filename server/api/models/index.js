@@ -5,9 +5,9 @@ if (!global.hasOwnProperty('db')) {
     var env = require('../../config/environment');
     var dbCreds = env.dbCreds;
 
-    if (process.env.HEROKU_POSTGRESQL_BRONZE_URL) {
+    if (process.env.HEROKU_POSTGRESQL_ONYX_URL) {
         // the application is executed on Heroku ... use the postgres database
-        var match = process.env.HEROKU_POSTGRESQL_BRONZE_URL.match(/postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/)
+        var match = process.env.HEROKU_POSTGRESQL_ONYX_URL.match(/postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/)
 
         sequelize = new Sequelize(match[5], match[1], match[2], {
             dialect:  'postgres',
