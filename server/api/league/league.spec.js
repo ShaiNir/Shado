@@ -6,6 +6,8 @@ var testUtil = require('../../components/test-util.js');
 var db = require('../models');
 var app =  require('../../app');
 
+var populateTest = require('league_test.js');
+
 db.sequelize.sync();
 
 var agent = request.agent(app);
@@ -161,44 +163,39 @@ Written by Sammy on 03/12/14
 */
 
 describe('GET /api/leagues/:id/populate', function() {
+    var loginToken;
+
+    var account1 = {
+        email: 'test1@test.com',
+        password: 'test',
+        role: 'admin'
+    };
+    var account2 = {
+        email: 'test2@test.com',
+        password: 'testing',
+        role: 'commish'
+    };
 
     beforeEach(function(done) {
         // Clear db before testing
-        db.League.destroy({},{truncate: true}).success(function() {
-            db.Team.destroy({},{truncate: true}).success(function() {
-            });
-        });
-        db.League.create({
-            name: 'Test League',
-            id: 1
-        }).success(function(league1){
-            for(var teamNumber = 1; teamNumber < 21; teamNumber ++) {
-                db.Team.create({
-                    name: 'Team ' + teamNumber,
-                }).success(function(team) {
-                    team.setLeague(league1);
-                    team.save();
+        db.User.destroy({}, {truncate: true}).success(function() {
+            db.League.destroy({},{truncate: true}).success(function() {
+                db.Team.destroy({},{truncate: true}).success(function() {
                 });
-            }
-            db.Team.create({
-                name: 'Commish Team',
-                special: 'commish'
-            }).success(function(team) {
-                team.setLeague(league1);
-                team.save();
             });
-            db.Team.create({
-                name: 'Free Agency Team',
-                special: 'freeagency'
-            }).success(function(team) {
-                team.setLeague(league1);
-                team.save();
-            });
-            done();
         })
+
+        var user1 = db.User.create(account1);
+        var user2 = db.User.create(account2);
+
+        testUtil.loginUser(request(app),account1,function(token){
+            loginToken = token;
+            done();
+        });
     });
 
     it('should have created a league', function(done) {
+        populateTest.populate(user1);
         db.League.find(1).then(function() {
         }).success(function() {
             done();
@@ -206,6 +203,7 @@ describe('GET /api/leagues/:id/populate', function() {
     });
 
     it('should have made 22 teams', function(done) {
+        populateTest.populate(user1);
         db.Team.findAndCountAll([
         ]).success(function(result) {
             result.count.should.equal(22);
@@ -214,6 +212,7 @@ describe('GET /api/leagues/:id/populate', function() {
     });
 
     it('should have found a team with commish special type', function(done) {
+        populateTest.populate(user1);
         db.Team.find({where: {special: "commish"}
         }).success(function(teams) {
             done();
@@ -221,9 +220,14 @@ describe('GET /api/leagues/:id/populate', function() {
     });
 
     it('should have found a team with freeagency special type', function(done) {
+        populateTest.populate(user1);
         db.Team.find({where: {special: "freeagency"}
         }).success(function(teams) {
             done();
         });
     });
+
+    it('should only allow user 1 to send and complete the request', function(done) {
+
+    })
 });

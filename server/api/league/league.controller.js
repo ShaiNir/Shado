@@ -120,7 +120,7 @@ exports.settings = function(req, res) {
 exports.populate = function(req, res) {
   var user = req.user;
   if (user.role !== admin) {
-    return res.send (403);
+    return res.send (401);
   }
   League.find(req.params.id).then(function (league) {
     if (!league) {
