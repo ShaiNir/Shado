@@ -43,11 +43,11 @@ describe('GET /api/teams/:id/players', function() {
         id: 1
       }).success(function(player1){
         player1.addTeam(team1);
-        player1.save();
-
+        player1.save().success(function(){
+            done();
+        });
       });
     });
-    done();
   });
 
   it('should respond with JSON array', function(done) {
