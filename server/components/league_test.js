@@ -21,15 +21,30 @@ var Populate = (function() {
 
     var _fillLeague = function(user) {
         if (user.role !== 'admin') {
-            console.log("error", "User is not an admin");
+            console.log("Error, user is not an admin, user role is: " + user.role);
+            return false;
         }
         db.League.create({
-        name: 'Test League',
-        id: 1
+            name: 'Test League',
+            id: 1
         }).success(function(league){
             for(var teamNumber = 1; teamNumber < 21; teamNumber ++) {
-                buildTeams(teamNumber, league)
+                buildUserTeams(teamNumber, league)
             }
+            buildSpecialTeams(league)
+        });
+    }
+
+    var buildUserTeams = function(teamNumber, league) {
+        db.Team.create({
+            name: 'Team ' + teamNumber
+        }).success(function(team) {
+            team.setLeague(league);
+            team.save();
+        });
+    }
+
+    var buildSpecialTeams = function(league) {
         db.Team
             .create(commishTeam)
             .success(function(team) {
@@ -42,16 +57,6 @@ var Populate = (function() {
                 team.setLeague(league);
                 team.save();
             });
-        });
-    }
-
-    var buildTeams = function(teamNumber, league) {
-        db.Team.create({
-            name: 'Team ' + teamNumber
-        }).success(function(team) {
-            team.setLeague(league);
-            team.save();
-        });
     }
     return {
         fillLeague : _fillLeague

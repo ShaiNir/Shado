@@ -56,8 +56,6 @@ describe('POST /api/:id/sports/populate', function() {
       populateTest.parseCsv(baseCsv, sport);
     }).success(function() {
       db.Player.findAll({ where: {SportId: 1} }).then(function(players) {
-        console.log("Displaying players!");
-        console.log(players);
       });
     });
   });
@@ -80,8 +78,7 @@ describe('POST /api/:id/sports/populate', function() {
       should(false).ok
     }, function (err) {
         should.exist(err);
-      }
-    );
+    });
   });
 
   it('should fail if data is duplicated', function() {

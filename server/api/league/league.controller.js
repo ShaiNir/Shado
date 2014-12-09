@@ -126,7 +126,7 @@ exports.populate = function(req, res) {
     if (!league) {
       return res.send(404);
     }
-    populate(league)
+    populateLeague(league);
     return res.send(204, league);
     }, function(error) {
       return handleError(res, error);
@@ -141,33 +141,49 @@ function handleError(res, error) {
 * Created by Sammy on 12/3/14
 **/
 
-function populate(league) {
+function populateLeague(league) {
   for(var teamNumber = 1; teamNumber < 21; teamNumber ++) {
-    db.Team.create({
-      name: 'Team ' + teamNumber,
-    }).success(function(team) {
-      team.setLeague(league);
-      team.save();
-    }).error(function(err) {
-      logger.log("error", "Failed to create user team " + teamNumber);
-    });
+    buildUserTeams(teamNumber, league)
   };
+  buildSpecialTeams(league);
+};
+
+function buildUserTeams(teamNumber, league) {
   db.Team.create({
-    name: 'Commisioner Team',
-    special: 'commish'
+    name: 'Team ' + teamNumber,
   }).success(function(team) {
     team.setLeague(league);
     team.save();
   }).error(function(err) {
-    logger.log("error", "Failed to commisioner team");
+    logger.log("error", "Failed to create user team " + teamNumber);
   });
-  db.Team.create({
+});
+
+function buildSpecialTeams(league) {
+  var commishTeam = {
+    name: 'Commisioner Team',
+    special: 'commish'
+  };
+
+  var freeAgencyTeam = {
     name: 'Free Agency Team',
     special: 'freeagency'
-  }).success(function(team) {
-    team.setLeague(league);
-    team.save();
+  };
+
+  db.Team
+    .create(commishTeam)
+    .success(function(team) {
+      team.setLeague(league);
+      team.save();
+  }).error(function(err) {
+    logger.log("error", "Failed to create commisioner team");
+  });
+  db.Team
+    .create(freeAgencyTeam)
+    .success(function(team) {
+      team.setLeague(league);
+      team.save();
   }).error(function(err) {
     logger.log("error", "Failed to create free agency team");
   });
-};
+}

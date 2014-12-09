@@ -8,7 +8,7 @@ var Sport = db.Sport;
 var Player = db.Player;
 var fs = require('fs')
 
-var Populate = function(){
+var Populate = (function(){
   var _parseCsv = function(csv, sport) {
     var fileStream = fs.createReadStream(csv);
     var csvConverter = new Converter({constructResult:true});
@@ -40,5 +40,5 @@ var Populate = function(){
   return {
     parseCsv : _parseCsv,
   }
-}();
+}());
 module.exports = Populate;

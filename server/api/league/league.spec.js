@@ -184,31 +184,21 @@ describe('GET /api/leagues/:id/populate', function() {
         })
     });
 
-    // beforeEach(function(done) {
-    //     .success(function() {
-    //         commishUser = db.User.create(account2).success(function() {
-    //             done();
-    //         });
-    //     });
-    // });
-
     it('should have created a league', function(done) {
-        var adminUser = db.User.create(account1)
-        populateTest.fillLeague(adminUser)
-            .success(function(result) {
+        db.User.create(account1).success(function(adminUser) {
+            populateTest.fillLeague(adminUser)
             db.League.find(1).then(function() {
-            }).success(function() {
                 done();
             });
         });
     });
 
     it('should have made 22 teams', function(done) {
-        var adminUser = db.User.create(account1)
-        populateTest.fillLeague(adminUser)
-            .success(function(result) {
+        db.User.create(account1).success(function(adminUser) {
+            populateTest
+            .fillLeague(adminUser);
             db.Team.findAndCountAll([
-            ]).success(function(result) {
+            ]).then(function(result) {
                 result.count.should.equal(22);
                 done();
             });
@@ -216,24 +206,31 @@ describe('GET /api/leagues/:id/populate', function() {
     });
 
     it('should have found a team with commish special type', function(done) {
-        var adminUser = db.User.create(account1)
-        populateTest.fillLeague(adminUser);
-        db.Team.find({where: {special: "commish"}
-        }).success(function(teams) {
-            done();
+        db.User.create(account1).success(function(adminUser) {
+            populateTest.fillLeague(adminUser);
+            db.Team.find({where: {special: "commish"}
+            }).then(function(teams) {
+                done();
+            });
         });
     });
 
     it('should have found a team with freeagency special type', function(done) {
-        var adminUser = db.User.create(account1)
-        populateTest.fillLeague(adminUser);
-        db.Team.find({where: {special: "freeagency"}
-        }).success(function(teams) {
-            done();
+        db.User.create(account1).success(function(adminUser) {
+            populateTest.fillLeague(adminUser);
+            db.Team.find({where: {special: "freeagency"}
+            }).then(function(teams) {
+                done();
+            });
         });
     });
 
-    // it('should only allow adminUser to send and complete the request', function(done) {
-
-    // })
+    it('should only allow adminUser to send and complete the request', function(done) {
+        db.User.create(account2).success(function(commishUser) {
+            populateTest.fillLeague(commishUser);
+        }).then(function () {
+            should(true).ok
+            done();
+        });
+    });
 });
