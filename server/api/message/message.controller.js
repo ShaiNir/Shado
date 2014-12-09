@@ -60,7 +60,7 @@ exports.pm = function(req, res) {
                 return validateRecipient;
             }
             return db.Message.create(req.body).then(function (message) {
-                return MessageHelper.email(message.id).then(function () {
+                return MessageHelper.messageEmail(message.id).then(function () {
                     res.send(201);
                 });
             });

@@ -57,7 +57,10 @@ var all = {
     clientID:     process.env.GOOGLE_ID || 'id',
     clientSecret: process.env.GOOGLE_SECRET || 'secret',
     callbackURL:  process.env.DOMAIN + '/auth/google/callback'
-  }
+  },
+
+  // Email transport
+  emailTransportOptions: {service: 'Gmail', auth: {user: 'messagetest@shadosports.com', pass: 'thisisatest'}}
 };
 
 // Export the config object based on the NODE_ENV
