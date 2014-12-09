@@ -7,9 +7,9 @@ var validatePresenceOf = function(value) {
 
 module.exports = function(sequelize, DataTypes) {
     return sequelize.define('User', {
-        name: DataTypes.STRING,
+        name: DataTypes.STRING, //Todo: validate sane for SQL/HTML
         phone: DataTypes.STRING,
-        email: {
+        email: { //Todo: validate well-formed email
             type: DataTypes.STRING,
             unique: true,
             validate: {
@@ -26,7 +26,7 @@ module.exports = function(sequelize, DataTypes) {
             type: DataTypes.ENUM,
             values: ["admin", "commish", "gm", "manager"]
         },
-        franchiseName: DataTypes.STRING,
+        franchiseName: DataTypes.STRING, //Todo: validate sane for SQL/HTML
         budget: DataTypes.INTEGER,
         hashedPassword: {
             type: DataTypes.STRING,

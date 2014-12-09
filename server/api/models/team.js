@@ -1,6 +1,6 @@
 module.exports = function(sequelize, DataTypes) {
     return sequelize.define('Team', {
-        name: DataTypes.STRING,
+        name: DataTypes.STRING, //Todo: validate sane for SQL/HTML
         budget: DataTypes.INTEGER,
         latlong: DataTypes.STRING,
         special: {
