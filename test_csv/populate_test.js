@@ -1,6 +1,6 @@
 /**
-* Created by Sammy on 18/11/14.
-*/
+* Created by Sammy on 11/18/14.
+**/
 
 var Converter = require('csvtojson').core.Converter;
 var db = require('../server/api/models');
@@ -33,7 +33,7 @@ var Populate = function(){
         player.save();
       });
       promise.error(function(err){
-        console.log("error", "Failed to process player: " + player.name);
+        console.log("error", "Failed to process player: " + player.playerName);
       });
     });
   }

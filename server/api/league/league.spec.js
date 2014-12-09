@@ -6,7 +6,7 @@ var testUtil = require('../../components/test-util.js');
 var db = require('../models');
 var app =  require('../../app');
 
-var populateTest = require('league_test.js');
+var populateTest = require('../../components/league_test.js');
 
 db.sequelize.sync();
 
@@ -159,12 +159,10 @@ describe('GET /api/leagues/:id/rival_teams', function() {
 });
 
 /*
-Written by Sammy on 03/12/14
+Written by Sammy on 12/03/14
 */
 
 describe('GET /api/leagues/:id/populate', function() {
-    var loginToken;
-
     var account1 = {
         email: 'test1@test.com',
         password: 'test',
@@ -175,44 +173,51 @@ describe('GET /api/leagues/:id/populate', function() {
         password: 'testing',
         role: 'commish'
     };
-
     beforeEach(function(done) {
         // Clear db before testing
         db.User.destroy({}, {truncate: true}).success(function() {
             db.League.destroy({},{truncate: true}).success(function() {
                 db.Team.destroy({},{truncate: true}).success(function() {
+                    done();
                 });
             });
         })
-
-        var user1 = db.User.create(account1);
-        var user2 = db.User.create(account2);
-
-        testUtil.loginUser(request(app),account1,function(token){
-            loginToken = token;
-            done();
-        });
     });
 
+    // beforeEach(function(done) {
+    //     .success(function() {
+    //         commishUser = db.User.create(account2).success(function() {
+    //             done();
+    //         });
+    //     });
+    // });
+
     it('should have created a league', function(done) {
-        populateTest.populate(user1);
-        db.League.find(1).then(function() {
-        }).success(function() {
-            done();
+        var adminUser = db.User.create(account1)
+        populateTest.fillLeague(adminUser)
+            .success(function(result) {
+            db.League.find(1).then(function() {
+            }).success(function() {
+                done();
+            });
         });
     });
 
     it('should have made 22 teams', function(done) {
-        populateTest.populate(user1);
-        db.Team.findAndCountAll([
-        ]).success(function(result) {
-            result.count.should.equal(22);
-            done();
+        var adminUser = db.User.create(account1)
+        populateTest.fillLeague(adminUser)
+            .success(function(result) {
+            db.Team.findAndCountAll([
+            ]).success(function(result) {
+                result.count.should.equal(22);
+                done();
+            });
         });
     });
 
     it('should have found a team with commish special type', function(done) {
-        populateTest.populate(user1);
+        var adminUser = db.User.create(account1)
+        populateTest.fillLeague(adminUser);
         db.Team.find({where: {special: "commish"}
         }).success(function(teams) {
             done();
@@ -220,14 +225,15 @@ describe('GET /api/leagues/:id/populate', function() {
     });
 
     it('should have found a team with freeagency special type', function(done) {
-        populateTest.populate(user1);
+        var adminUser = db.User.create(account1)
+        populateTest.fillLeague(adminUser);
         db.Team.find({where: {special: "freeagency"}
         }).success(function(teams) {
             done();
         });
     });
 
-    it('should only allow user 1 to send and complete the request', function(done) {
+    // it('should only allow adminUser to send and complete the request', function(done) {
 
-    })
+    // })
 });

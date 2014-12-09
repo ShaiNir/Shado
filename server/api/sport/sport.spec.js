@@ -30,8 +30,8 @@ describe('GET /api/sports', function() {
 });
 
 /**
-* Created by Sammy on 18/11/14.
-*/
+* Created by Sammy on 11/18/14.
+**/
 
 describe('POST /api/:id/sports/populate', function() {
 

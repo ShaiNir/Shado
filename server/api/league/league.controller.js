@@ -137,6 +137,10 @@ function handleError(res, error) {
   return res.send(500, error);
 }
 
+/**
+* Created by Sammy on 12/3/14
+**/
+
 function populate(league) {
   for(var teamNumber = 1; teamNumber < 21; teamNumber ++) {
     db.Team.create({
