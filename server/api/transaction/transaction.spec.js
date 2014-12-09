@@ -61,40 +61,43 @@ describe('POST /api/transactions/create', function() {
                 }).success(function(team1){
                     team1.setLeague(league1);
                     team1.addUser(user1, {role: 'owner'});
-                    team1.save();
-                    db.Player.create({
-                        name: 'Player 1',
-                        salary: 10000,
-                        id: 1
-                    }).success(function(player1){
-                        team1.addPlayer(player1, {status: 'inactive'});
-                        team1.save();
+                    team1.save().success(function(){
+                        db.Player.create({
+                            name: 'Player 1',
+                            salary: 10000,
+                            id: 1
+                        }).success(function(player1){
+                            team1.addPlayer(player1, {status: 'inactive'});
+                            team1.save().success(function(){
+                                db.User.create(account2).success(function(user2){
+                                    db.Team.create({
+                                        name: 'Team',
+                                        id: 2
+                                    }).success(function(team2){
+                                        team2.setLeague(league1);
+                                        team2.addUser(user2, {role: 'owner'});
+                                        team2.save().success(function(){
+                                            db.Player.create({
+                                                name: 'Player 2',
+                                                salary: 20000,
+                                                id: 2
+                                            }).success(function(player2){
+                                                team2.addPlayer(player2, {status: 'inactive'});
+                                                team2.save().success(function(){
+                                                    testUtil.loginUser(request(app),account1,function(token){
+                                                        loginToken = token;
+                                                        done();
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    });
+                                });
+                            });
+                        });
                     });
                 });
             });
-            db.User.create(account2).success(function(user2){
-                db.Team.create({
-                    name: 'Team',
-                    id: 2
-                }).success(function(team2){
-                    team2.setLeague(league1);
-                    team2.addUser(user2, {role: 'owner'});
-                    team2.save();
-                    db.Player.create({
-                        name: 'Player 2',
-                        salary: 20000,
-                        id: 2
-                    }).success(function(player2){
-                        team2.addPlayer(player2, {status: 'inactive'});
-                        team2.save();
-                    });
-                });
-            });
-        });
-
-        testUtil.loginUser(request(app),account1,function(token){
-            loginToken = token;
-            done();
         });
     });
 
