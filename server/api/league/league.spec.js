@@ -49,25 +49,26 @@ describe('GET /api/leagues/:id/teams', function() {
 
         db.User.create(account).success(function(user1){
             var pass = user1.password;
-            db.League.create({
+            return db.League.create({
                 name: 'League',
                 id: 1
             }).success(function(league1){
-                db.Team.create({
+                return db.Team.create({
                     name: 'Team',
                     id: 1
                 }).success(function(team1){
                     team1.setLeague(league1);
                     team1.addUser(user1, {role: 'owner'});
-                    team1.save();
+                    return team1.save();
                 });
+            });
+        }).then(function(){
+            testUtil.loginUser(request(app),account,function(token){
+                loginToken = token;
+                done();
             });
         });
 
-        testUtil.loginUser(request(app),account,function(token){
-            loginToken = token;
-            done();
-        });
     });
 
     it('should respond with JSON array', function(done) {
@@ -114,25 +115,26 @@ describe('GET /api/leagues/:id/rival_teams', function() {
 
         db.User.create(account1);
         db.User.create(account2).success(function(user2){
-            db.League.create({
+            return db.League.create({
                 name: 'League',
                 id: 1
             }).success(function(league1){
-                db.Team.create({
+                return db.Team.create({
                     name: 'Team',
                     id: 1
                 }).success(function(team1){
                     team1.setLeague(league1);
                     team1.addUser(user2, {role: 'owner'});
-                    team1.save();
+                    return team1.save();
                 });
+            });
+        }).then(function(){
+            testUtil.loginUser(request(app),account2,function(token){
+                loginToken = token;
+                done();
             });
         });
 
-        testUtil.loginUser(request(app),account2,function(token){
-            loginToken = token;
-            done();
-        });
     });
 
     it('should respond with JSON array', function(done) {
