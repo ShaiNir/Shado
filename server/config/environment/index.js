@@ -60,7 +60,7 @@ var all = {
   },
 
   // Email transport
-  emailTransportOptions: {service: 'Gmail', auth: {user: 'messagetest@shadosports.com', pass: 'thisisatest'}}
+  emailTransportOptions: {service: 'Mandrill', auth: {user: 'shai@shadosports.com', pass: 'e8Ko53vVtPmIcNDRw7sORw'}}
 };
 
 // Export the config object based on the NODE_ENV

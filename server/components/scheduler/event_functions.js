@@ -8,6 +8,11 @@
 
 var logger = require('../../logger');
 var Promise = require("sequelize/node_modules/bluebird");
+var _ = require("lodash");
+
+var helpers = {
+    Message: require('../../api/message/message.helper.js')
+}
 
 /**
  * Log a message to the console
@@ -19,3 +24,14 @@ exports.log = function(options){
     logger.log(options.severity, options.text);
     return Promise.resolve(null);
 }
+
+/**
+ * Send a digest e-mail to a single league
+ */
+exports.leagueDigest = function(options){
+    // Ensure daySpan is an integer
+    if(options.daySpan == null || !(typeof options.daySpan === 'number') || !(options.daySpan % 1 === 0)){
+        return Promise.reject(new Error('daySpan is not an integer'));
+    }
+    return helpers.Message.digestEmail(options.LeagueId, options.daySpan);
+};

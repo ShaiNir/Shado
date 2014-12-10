@@ -61,20 +61,22 @@ exports.fetchEvents = fetchEvents;
 var runEvent = function(event){
     Promise.try(function(){
         var params = event.params;
+        params.LeagueId = event.LeagueId;
         var promise = EventFunctions[event.function](params);
         if(!_.isObject(promise) || !_.isFunction(promise.then)){
             logger.log('error','Event function did not return a promise.', {event: JSON.stringify(event)});
             return;
         }
         return promise.then(function(){
-            return event.reload().then(function(reloadedEvent){
-                reloadedEvent.status = 'done';
-                return reloadedEvent.save();
-            })
-        },function(error){
-            return event.reload().then(function(reloadedEvent){
-                reloadedEvent.status = 'error';
-                return reloadedEvent.save();
+                return event.reload().then(function(reloadedEvent){
+                    reloadedEvent.status = 'done';
+                    return reloadedEvent.save();
+                })
+            },function(error){
+                logger.log('error','Error trying to run event function.', {event: JSON.stringify(event), error: JSON.stringify(error)});
+                return event.reload().then(function(reloadedEvent){
+                    reloadedEvent.status = 'error';
+                    return reloadedEvent.save();
             });
         });
     }).catch(function(error){
