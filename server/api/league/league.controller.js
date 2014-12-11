@@ -4,6 +4,8 @@ var _ = require('lodash');
 var db = require('../models');
 var League = db.League;
 
+var DEFAULT_USER_TEAM_TOTAL = 20
+
 // Get list of leagues
 exports.index = function(req, res) {
   League.findAll().then(function (leagues) {
@@ -142,7 +144,7 @@ function handleError(res, error) {
 **/
 
 function populateLeague(league) {
-  for(var teamNumber = 1; teamNumber < 21; teamNumber ++) {
+  for(var teamNumber = 1; teamNumber === DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
     buildUserTeams(teamNumber, league)
   };
   buildSpecialTeams(league);
@@ -157,7 +159,7 @@ function buildUserTeams(teamNumber, league) {
   }).error(function(err) {
     logger.log("error", "Failed to create user team " + teamNumber);
   });
-});
+};
 
 function buildSpecialTeams(league) {
   var commishTeam = {

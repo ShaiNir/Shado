@@ -28,10 +28,10 @@ var Populate = (function() {
             name: 'Test League',
             id: 1
         }).success(function(league){
+            buildSpecialTeams(league);
             for(var teamNumber = 1; teamNumber < 21; teamNumber ++) {
                 buildUserTeams(teamNumber, league)
             }
-            buildSpecialTeams(league)
         });
     }
 

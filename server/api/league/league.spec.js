@@ -173,7 +173,7 @@ describe('GET /api/leagues/:id/populate', function() {
         password: 'testing',
         role: 'commish'
     };
-    beforeEach(function(done) {
+    before(function(done) {
         // Clear db before testing
         db.User.destroy({}, {truncate: true}).success(function() {
             db.League.destroy({},{truncate: true}).success(function() {
@@ -184,44 +184,37 @@ describe('GET /api/leagues/:id/populate', function() {
         })
     });
 
-    it('should have created a league', function(done) {
+    before(function(done) {
         db.User.create(account1).success(function(adminUser) {
-            populateTest.fillLeague(adminUser)
-            db.League.find(1).then(function() {
-                done();
-            });
+            populateTest.fillLeague(adminUser);
+        });
+        done();
+    })
+
+    it('should have created a league', function(done) {
+        db.League.find(1).then(function(league) {
+            done();
         });
     });
 
     it('should have made 22 teams', function(done) {
-        db.User.create(account1).success(function(adminUser) {
-            populateTest
-            .fillLeague(adminUser);
-            db.Team.findAndCountAll([
-            ]).then(function(result) {
-                result.count.should.equal(22);
-                done();
-            });
+        db.Team.findAndCountAll().then(function(result) {
+            result.count.should.equal(22);
+            done();
         });
     });
 
     it('should have found a team with commish special type', function(done) {
-        db.User.create(account1).success(function(adminUser) {
-            populateTest.fillLeague(adminUser);
-            db.Team.find({where: {special: "commish"}
-            }).then(function(teams) {
-                done();
-            });
+        db.Team.find({where: {special: "commish"}
+        }).then(function(team) {
+            done();
         });
     });
 
     it('should have found a team with freeagency special type', function(done) {
-        db.User.create(account1).success(function(adminUser) {
-            populateTest.fillLeague(adminUser);
-            db.Team.find({where: {special: "freeagency"}
-            }).then(function(teams) {
-                done();
-            });
+        db.Team.find({where: {special: "freeagency"}
+        }).then(function(team) {
+            done();
         });
     });
 
