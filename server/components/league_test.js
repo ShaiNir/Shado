@@ -2,22 +2,11 @@
 * Created by Sammy on 12/8/14
 **/
 var db = require('../api/models');
-// var User = db.User;
-// var League = db.League;
-// var Team = db.Team;
-
 
 var Populate = (function() {
+    var teamArray =[]
+    var DEFAULT_USER_TEAM_TOTAL = 21
 
-    var commishTeam = {
-            name: 'Commish Team',
-            special: 'commish'
-        };
-
-    var freeAgencyTeam = {
-        name: 'Free Agency Team',
-        special: 'freeagency'
-    };
 
     var _fillLeague = function(user) {
         if (user.role !== 'admin') {
@@ -28,36 +17,44 @@ var Populate = (function() {
             name: 'Test League',
             id: 1
         }).success(function(league){
-            buildSpecialTeams(league);
-            for(var teamNumber = 1; teamNumber < 21; teamNumber ++) {
-                buildUserTeams(teamNumber, league)
+            pushSpecialTeams(league);
+            for(var teamNumber = 1; teamNumber < DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
+                pushUserTeams(teamNumber, league)
             }
+        }).success(function(){
+            db.Team
+                .bulkCreate(teamArray)
+                .success(function() {
+                    console.log("Success!")
+                }).error(function(err){
+                    console.log("Failure!")
+                });
         });
     }
 
-    var buildUserTeams = function(teamNumber, league) {
-        db.Team.create({
-            name: 'Team ' + teamNumber
-        }).success(function(team) {
-            team.setLeague(league);
-            team.save();
-        });
+    var pushUserTeams = function(teamNumber, league) {
+        var newTeam = {
+            name: 'Team ' + teamNumber,
+            leagueId: league.id
+        }
+        teamArray.push(newTeam);
     }
 
-    var buildSpecialTeams = function(league) {
-        db.Team
-            .create(commishTeam)
-            .success(function(team) {
-                team.setLeague(league);
-                team.save();
-            });
-        db.Team
-            .create(freeAgencyTeam)
-            .success(function(team) {
-                team.setLeague(league);
-                team.save();
-            });
+    var pushSpecialTeams = function(league) {
+        var commishTeam = {
+            name: 'Commish Team',
+            special: 'commish',
+            leagueId: league.id,
+        };
+
+        var freeAgencyTeam = {
+            name: 'Free Agency Team',
+            special: 'freeagency',
+            leagueId: league.id,
+        };
+        teamArray.push(commishTeam, freeAgencyTeam);
     }
+
     return {
         fillLeague : _fillLeague
     }

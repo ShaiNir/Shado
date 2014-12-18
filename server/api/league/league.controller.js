@@ -4,7 +4,8 @@ var _ = require('lodash');
 var db = require('../models');
 var League = db.League;
 
-var DEFAULT_USER_TEAM_TOTAL = 20
+var teamArray = []
+var DEFAULT_USER_TEAM_TOTAL = 21
 
 // Get list of leagues
 exports.index = function(req, res) {
@@ -120,10 +121,10 @@ exports.settings = function(req, res) {
 };
 
 exports.populate = function(req, res) {
-  var user = req.user;
-  if (user.role !== admin) {
-    return res.send (401);
-  }
+  // var user = req.user;
+  // if (user.role !== admin) {
+  //   return res.send (401);
+  // }
   League.find(req.params.id).then(function (league) {
     if (!league) {
       return res.send(404);
@@ -143,49 +144,41 @@ function handleError(res, error) {
 * Created by Sammy on 12/3/14
 **/
 
+
 function populateLeague(league) {
-  for(var teamNumber = 1; teamNumber === DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
-    buildUserTeams(teamNumber, league)
-  };
-  buildSpecialTeams(league);
-};
 
-function buildUserTeams(teamNumber, league) {
-  db.Team.create({
-    name: 'Team ' + teamNumber,
-  }).success(function(team) {
-    team.setLeague(league);
-    team.save();
-  }).error(function(err) {
-    logger.log("error", "Failed to create user team " + teamNumber);
-  });
-};
-
-function buildSpecialTeams(league) {
   var commishTeam = {
     name: 'Commisioner Team',
-    special: 'commish'
+    special: 'commish',
+    LeagueId: league.id,
   };
 
   var freeAgencyTeam = {
     name: 'Free Agency Team',
-    special: 'freeagency'
+    special: 'freeagency',
+    LeagueId: league.id,
   };
 
+  for(var teamNumber = 1; teamNumber < DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
+    fillArray(teamNumber, league)
+  };
+  teamArray.push(commishTeam, freeAgencyTeam)
+  createTeams(teamArray)
+}
+
+function fillArray(teamNumber, league) {
+    teamArray.push({
+    name: 'Team ' + teamNumber,
+    LeagueId: league.id,
+  })
+}
+
+function createTeams(teamArray) {
   db.Team
-    .create(commishTeam)
-    .success(function(team) {
-      team.setLeague(league);
-      team.save();
-  }).error(function(err) {
-    logger.log("error", "Failed to create commisioner team");
-  });
-  db.Team
-    .create(freeAgencyTeam)
-    .success(function(team) {
-      team.setLeague(league);
-      team.save();
-  }).error(function(err) {
-    logger.log("error", "Failed to create free agency team");
-  });
+      .bulkCreate(teamArray)
+    .success(function() {
+      console.log("Success", "Suceeded in populating league");
+    }).error(function(err) {
+      logger.log("error", "Failure to populate league")
+    })
 }

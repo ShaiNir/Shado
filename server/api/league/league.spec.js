@@ -206,14 +206,14 @@ describe('GET /api/leagues/:id/populate', function() {
 
     it('should have found a team with commish special type', function(done) {
         db.Team.find({where: {special: "commish"}
-        }).then(function(team) {
+        }).success(function(team) {
             done();
         });
     });
 
     it('should have found a team with freeagency special type', function(done) {
         db.Team.find({where: {special: "freeagency"}
-        }).then(function(team) {
+        }).success(function(team) {
             done();
         });
     });
