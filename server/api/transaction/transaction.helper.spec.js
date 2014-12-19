@@ -5,6 +5,7 @@ var db =  require('../models');
 var TransactionHelper = require('../transaction/transaction.helper');
 var Promise = require("sequelize/node_modules/bluebird");
 var _ = require('lodash');
+var testUtil = require('../../components/test-util.js');
 
 db.sequelize.sync();
 
@@ -40,7 +41,7 @@ var setUpLeague= function(done){
 
 var setUpSimpleTrade = function(done){
     setUpLeague(function(su) {
-        db.Transaction.create({type: 'trade', LeagueId: su.league.id}).then(function (transaction) {
+        db.Transaction.create({type: 'trade', LeagueId: su.league.id, authorId: su.team1.id}).then(function (transaction) {
             var items = [
                 {
                     assetType: 'Player',
@@ -58,7 +59,7 @@ var setUpSimpleTrade = function(done){
                 }
             ];
             db.TransactionItem.bulkCreate(items).then(function () {
-                su.transaction = transaction
+                su.transaction = transaction;
                 done(su);
             });
         });
@@ -87,9 +88,9 @@ describe('Transaction Helper', function() {
 
     it('should create team transaction approvals', function(done) {
         setUpSimpleTrade(function (su) {
-            TransactionHelper.createAssetOwnerApprovals(su.transaction.id, su.team1.id).then(function (approvals) {
+            TransactionHelper.createAssetOwnerApprovals(su.transaction.id).then(function (approvals) {
                 approvals.should.be.instanceOf(Array);
-                approvals.length.should.equal(2)
+                approvals.length.should.equal(2);
                 var teamIds = [su.team1.id, su.team2.id];
                 var approvalTeamIds = [approvals[0].TeamId, approvals[1].TeamId];
                 _.min(approvalTeamIds).should.equal(_.min(teamIds));
