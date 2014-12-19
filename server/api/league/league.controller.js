@@ -180,7 +180,7 @@ function populateLeague(league) {
     "Walla Walla Krustys"
   ]
 
-  for(var teamNumber = 1; teamNumber <= DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
+  for(var teamNumber = 0; teamNumber <= DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
     fillArray(userTeams, teamNumber, league)
   };
   teamArray.push(commishTeam, freeAgencyTeam)
@@ -189,7 +189,7 @@ function populateLeague(league) {
 
 function fillArray(userTeams, teamNumber, league) {
     teamArray.push({
-    name: userTeams[teamNumber],
+    name: userTeams[teamNumber-1],
     LeagueId: league.id,
   })
 }

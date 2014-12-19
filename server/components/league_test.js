@@ -58,7 +58,7 @@ var Populate = (function() {
           ]
 
         var newTeam = {
-            name: userTeams[teamNumber],
+            name: userTeams[teamNumber-1],
             leagueId: league.id
         }
         teamArray.push(newTeam);
