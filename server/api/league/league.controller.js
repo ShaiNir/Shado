@@ -5,7 +5,7 @@ var db = require('../models');
 var League = db.League;
 
 var teamArray = []
-var DEFAULT_USER_TEAM_TOTAL = 21
+var DEFAULT_USER_TEAM_TOTAL = 20
 
 // Get list of leagues
 exports.index = function(req, res) {
@@ -144,9 +144,7 @@ function handleError(res, error) {
 * Created by Sammy on 12/3/14
 **/
 
-
 function populateLeague(league) {
-
   var commishTeam = {
     name: 'Commisioner Team',
     special: 'commish',
@@ -159,16 +157,39 @@ function populateLeague(league) {
     LeagueId: league.id,
   };
 
-  for(var teamNumber = 1; teamNumber < DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
-    fillArray(teamNumber, league)
+  var userTeams = [
+    "Springfield Isotopes",
+    "Havana Capitals",
+    "Cheyenne Jacksonholes",
+    "Las Vegas Leprechauns",
+    "Flint Tropics",
+    "Louisville Sluggers",
+    "Yeehaw Junction Asi-Yaholas",
+    "Ashville Robots",
+    "Boulder Buttresses",
+    "Biloxi Boomerangs",
+    "Worcester Rockets",
+    "Eire Egotists",
+    "Calgary Cannons",
+    "Hicksville Hobos",
+    "Austin Normals",
+    "Dallas Diamond Dogs",
+    "Caguas Cauda Equinas",
+    "Mexico Charros",
+    "Portland Trailfollowers",
+    "Walla Walla Krustys"
+  ]
+
+  for(var teamNumber = 1; teamNumber <= DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
+    fillArray(userTeams, teamNumber, league)
   };
   teamArray.push(commishTeam, freeAgencyTeam)
   createTeams(teamArray)
 }
 
-function fillArray(teamNumber, league) {
+function fillArray(userTeams, teamNumber, league) {
     teamArray.push({
-    name: 'Team ' + teamNumber,
+    name: userTeams[teamNumber],
     LeagueId: league.id,
   })
 }

@@ -5,7 +5,7 @@ var db = require('../api/models');
 
 var Populate = (function() {
     var teamArray =[]
-    var DEFAULT_USER_TEAM_TOTAL = 21
+    var DEFAULT_USER_TEAM_TOTAL = 20
 
 
     var _fillLeague = function(user) {
@@ -18,7 +18,7 @@ var Populate = (function() {
             id: 1
         }).success(function(league){
             pushSpecialTeams(league);
-            for(var teamNumber = 1; teamNumber < DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
+            for(var teamNumber = 1; teamNumber <= DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
                 pushUserTeams(teamNumber, league)
             }
         }).success(function(){
@@ -33,8 +33,32 @@ var Populate = (function() {
     }
 
     var pushUserTeams = function(teamNumber, league) {
+
+          var userTeams = [
+            "Springfield Isotopes",
+            "Havana Capitals",
+            "Cheyenne Jacksonholes",
+            "Las Vegas Leprechauns",
+            "Flint Tropics",
+            "Louisville Sluggers",
+            "Yeehaw Junction Asi-Yaholas",
+            "Ashville Robots",
+            "Boulder Buttresses",
+            "Biloxi Boomerangs",
+            "Worcester Rockets",
+            "Eire Egotists",
+            "Calgary Cannons",
+            "Hicksville Hobos",
+            "Austin Normals",
+            "Dallas Diamond Dogs",
+            "Caguas Cauda Equinas",
+            "Mexico Charros",
+            "Portland Trailfollowers",
+            "Walla Walla Krustys"
+          ]
+
         var newTeam = {
-            name: 'Team ' + teamNumber,
+            name: userTeams[teamNumber],
             leagueId: league.id
         }
         teamArray.push(newTeam);
