@@ -5,6 +5,7 @@ var request = require('supertest');
 var testUtil = require('../../components/test-util.js');
 var db = require('../models');
 var app =  require('../../app');
+var Promise = require("sequelize/node_modules/bluebird");
 
 db.sequelize.sync();
 
@@ -23,22 +24,25 @@ describe('GET /api/transactions', function() {
   });
 });
 
-describe('POST /api/transactions/create', function() {
+describe('POST /api/transactions', function() {
     var loginToken;
 
     before(function(done) {
         // Clear db before testing
-        db.Sport.destroy({},{truncate: true});
-        db.User.destroy({},{truncate: true});
-        db.Team.destroy({},{truncate: true});
-        db.League.destroy({},{truncate: true});
-        db.Player.destroy({},{truncate: true});
-        db.Transaction.destroy({},{truncate: true});
-        db.TransactionItem.destroy({},{truncate: true});
-        db.TransactionApproval.destroy({},{truncate: true});
-        done();
+        var typesToClear = [
+            db.Sport,
+            db.User,
+            db.Team,
+            db.League,
+            db.Player,
+            db.PlayerAssignment,
+            db.Transaction,
+            db.TransactionItem,
+            db.TransactionApproval
+        ];
+        testUtil.clearSequelizeTables(typesToClear,done);
     });
-
+/*
     before(function(done){
 
         var account1 = {
@@ -100,8 +104,79 @@ describe('POST /api/transactions/create', function() {
             });
         });
     });
+*/
+    before(function(done){
+        var account1 = {
+            email: 'test1@test.com',
+            password: 'test'
+        };
+        var account2 = {
+            email: 'test2@test.com',
+            password: 'test'
+        };
 
-    it('should respond with a full transaction', function(done) {
+        Promise.bind({}).then(function(){
+            return db.League.create({
+                name: 'League',
+                id: 1
+            })
+        }).then(function(league){
+            this.league = league;
+            return db.User.create(account1)
+        }).then(function(user1){
+            this.user1 = user1;
+            return db.Team.create({
+                name: 'Team 1',
+                LeagueId: this.league.id,
+                id: 1
+            })
+        }).then(function(team1){
+            this.team1 = team1;
+            return db.Player.create({
+                name: 'Player 1',
+                salary: 10000,
+                id: 1
+            })
+        }).then(function(player1){
+            this.team1.addPlayer(player1, {status: 'inactive'});
+            this.team1.addUser(this.user1, {role: 'owner'});
+            return this.team1.save();
+        }).then(function(){
+            return db.User.create(account2);
+        }).then(function(user2){
+            this.user2 = user2;
+            return db.Team.create({
+                name: 'Team 2',
+                LeagueId: this.league.id,
+                id: 2
+            })
+        }).then(function(team2){
+            this.team2 = team2;
+            return db.Player.create({
+                name: 'Player 2',
+                salary: 20000,
+                id: 2
+            })
+        }).then(function(player2){
+            this.team2.addPlayer(player2, {status: 'inactive'});
+            this.team2.addUser(this.user2, {role: 'owner'});
+            return this.team2.save();
+        }).then(function(){
+            return db.Team.create({
+                name: 'Commish',
+                LeagueId: this.league.id,
+                special: 'commish',
+                id: 3
+            })
+        }).then(function(){
+            testUtil.loginUser(request(app),account1,function(token){
+                loginToken = token;
+                done();
+            });
+        })
+    });
+
+    it('should respond with a full trade', function(done) {
         var transaction = {
             LeagueId: 1,
             type: 'trade',
@@ -134,6 +209,8 @@ describe('POST /api/transactions/create', function() {
                 res.body.LeagueId.should.exist;
                 res.body.TransactionItems.should.be.instanceof(Array);
                 res.body.TransactionItems.length.should.equal(2);
+                res.body.TransactionApprovals.should.be.instanceof(Array);
+                res.body.TransactionApprovals.length.should.equal(3);
                 done();
             });
     });

@@ -4,6 +4,7 @@ var _ = require('lodash');
 var db = require('../models');
 var Promise = require("sequelize/node_modules/bluebird");
 var Transaction = db.Transaction;
+var TransactionHelper = require('../transaction/transaction.helper');
 
 // Get list of transactions
 exports.index = function(req, res) {
@@ -27,40 +28,42 @@ exports.show = function(req, res) {
 // Creates a new transaction in the DB.
 /** Input Format:
 {
-    league: ###,
+    LeagueId: ###,
     type: 'TYPE',
+    authorId: ID_OF_AUTHOR_TEAM,
     TransactionItems: [
       {
-         type:
+        assetType: 'TYPE',
+        asset: ASSET_ID, // The ID of the asset in its respective table
+        sourceId: ###,
+        destinationId: ###
       }
     ]
 }
 */
 exports.create = function(req, res) {
-    var transactionDetail = _.pick(req.body,['LeagueId','type']);
+    var transactionDetail = _.pick(req.body,['LeagueId','type','authorId']);
     var items = req.body.TransactionItems || {};
-    var transactionId;
-    Transaction.create(transactionDetail).then(function(transaction){
-        Promise.map(items, function(itemDetail){
-            return db.TransactionItem.create(itemDetail).then(function(item){
-                return item;
+    Promise.bind({}).then(function(){
+        return Transaction.create(transactionDetail).then(function(transaction) {
+            return Promise.map(items, function (itemDetail) {
+                return db.TransactionItem.create(itemDetail).then(function (item) {
+                    return item;
+                });
+            }).then(function (transactionItems) {
+                transaction.setTransactionItems(transactionItems);
+                return transaction.save();
             });
-        }).then(function(transactionItems){
-            transaction.setTransactionItems(transactionItems);
-            transaction.save().then(function(transaction) {
-                Transaction.find({where: {id: transaction.id}, include: [db.TransactionItem, db.TransactionApproval]})
-                    .then(function (returnTransaction) {
-                        return res.json(201, returnTransaction);
-                    }, function (error) {
-                        return handleError(res, error);
-                    });
-            }, function(error){
-                return handleError(res, error);
+        })
+    }).then(function(transaction){
+        this.transaction = transaction;
+        return TransactionHelper.createTradeApprovals(transaction);
+    }).then(function(){
+        return Transaction.find({where: {id: this.transaction.id}, include: [db.TransactionItem, db.TransactionApproval]})
+            .then(function (returnTransaction) {
+                res.json(201, returnTransaction);
             });
-        }, function(error){
-            return handleError(res, error);
-        });
-    },function(error) {
+    }).catch(function(error) {
         return handleError(res, error);
     });
 };
@@ -95,6 +98,5 @@ exports.destroy = function(req, res) {
 };
 
 function handleError(res, error) {
-    console.trace();
     return res.send(500, error);
 }

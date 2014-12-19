@@ -65,6 +65,7 @@ if (!global.hasOwnProperty('db')) {
     global.db.Transaction.belongsTo(global.db.Transaction, {as: 'series'});
     global.db.Transaction.belongsTo(global.db.League);
     global.db.Transaction.hasMany(global.db.TransactionApproval);
+    global.db.Transaction.belongsTo(global.db.Team, {as: 'author'});
 
     global.db.Transaction.hasMany(global.db.TransactionItem);
     global.db.TransactionItem.belongsTo(global.db.Transaction);
@@ -80,4 +81,4 @@ if (!global.hasOwnProperty('db')) {
     global.db.LeagueEvent.belongsTo(global.db.League);
 }
 
-module.exports = global.db
+module.exports = global.db;

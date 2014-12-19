@@ -3,9 +3,9 @@ var Promise = require("sequelize/node_modules/bluebird");
 var db = require('../models');
 
 // Creates initial TransactionApproval items for every team involved in the transaction.
-// If there is a user specified that last edited the transaction, that user's approval is automatically accepted.
-// Returns a promise
-exports.createAssetOwnerApprovals = function(transactionId, originTeamId){
+// If there is an author specified that last edited the transaction, that author's approval is automatically accepted.
+// Returns a promise which resolves with the list of approvals
+exports.createAssetOwnerApprovals = function(transactionId){
     return db.Transaction.find({
         where: {id: transactionId},
         include: [{model: db.TransactionItem, include: [{model: db.Team, as: 'source'},{model: db.Team, as: 'destination'}]}]
@@ -26,10 +26,10 @@ exports.createAssetOwnerApprovals = function(transactionId, originTeamId){
                 TeamId: teamId,
                 role: 'participant',
                 status: 'pending',
-                TransactionId: this.id
+                TransactionId: transaction.id
             };
-            // If an origin team is specified, automatically approve the transaction for that team
-            if (originTeamId == teamId) {
+            // If an author team is specified, automatically approve the transaction for that team
+            if (transaction.authorId == teamId) {
                 approvalInfo.status = 'approved';
             }
             return db.TransactionApproval.create(approvalInfo).then(function (approval) {
@@ -42,27 +42,28 @@ exports.createAssetOwnerApprovals = function(transactionId, originTeamId){
     });
 };
 
+// Returns a promise which resolves with the list of approvals
 exports.createCommishApproval = function(transactionId){
     return db.Transaction.find({
         where: {id: transactionId},
         include: [{model: db.League, include:
             [
                 {model: db.LeagueSetting, where:{key: 'TRADE_COMMISH_AUTO_APPROVE'}, required: false},
-                {model: db.Team, where:{special: 'commish'}}
+                {model: db.Team, where:{special: 'commish'}, required: false}
             ]
         }]
     }).then(function(transaction){
         var approvalInfo = {
             role: 'commish',
             status: 'pending',
-            TransactionId: this.id
+            TransactionId: transaction.id
         };
 
         var commishTeam = transaction.League.Teams[0];
         if(commishTeam){
             approvalInfo.TeamId = commishTeam.id;
         } else {
-            throw new Error('League with ID ' + transaction.LeagueId + ' has no commissioner team!');
+            return Promise.reject(new Error('League with ID ' + transaction.LeagueId + ' has no commissioner team!'));
         }
 
         var trade_auto_approve = transaction.League.LeagueSettings[0];
@@ -74,4 +75,17 @@ exports.createCommishApproval = function(transactionId){
             return approval;
         });
     });
+}
+
+
+//Check whether a transaction is a trade and if so creates the necessary Approval objects
+exports.createTradeApprovals = function(transaction){
+    if(transaction.type == 'trade'){
+        return Promise.all([
+            exports.createAssetOwnerApprovals(transaction.id),
+            exports.createCommishApproval(transaction.id)
+        ]);
+    } else {
+        return Promise.resolve([]);
+    }
 }
