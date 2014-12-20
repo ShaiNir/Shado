@@ -59,7 +59,7 @@ var Populate = (function() {
 
         var newTeam = {
             name: userTeams[teamNumber-1],
-            leagueId: league.id
+            LeagueId: league.id
         }
         teamArray.push(newTeam);
     }
@@ -68,13 +68,13 @@ var Populate = (function() {
         var commishTeam = {
             name: 'Commish Team',
             special: 'commish',
-            leagueId: league.id,
+            LeagueId: league.id,
         };
 
         var freeAgencyTeam = {
             name: 'Free Agency Team',
             special: 'freeagency',
-            leagueId: league.id,
+            LeagueId: league.id,
         };
         teamArray.push(commishTeam, freeAgencyTeam);
     }
