@@ -6,8 +6,6 @@ var _ = require('lodash');
 
 var Populate = (function() {
     var teamArray =[]
-    var DEFAULT_USER_TEAM_TOTAL = 20
-
 
     var _fillLeague = function(user) {
         if (user.role !== 'admin') {

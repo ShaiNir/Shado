@@ -5,7 +5,6 @@ var db = require('../models');
 var League = db.League;
 
 var teamArray = []
-var DEFAULT_USER_TEAM_TOTAL = 20
 
 // Get list of leagues
 exports.index = function(req, res) {
