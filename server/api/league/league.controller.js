@@ -121,10 +121,10 @@ exports.settings = function(req, res) {
 };
 
 exports.populate = function(req, res) {
-  // var user = req.user;
-  // if (user.role !== admin) {
-  //   return res.send (401);
-  // }
+  var user = req.user;
+  if (user.role !== admin) {
+    return res.send (401);
+  }
   League.find(req.params.id).then(function (league) {
     if (!league) {
       return res.send(404);
@@ -189,20 +189,6 @@ function populateLeague(league) {
   teamArray.push(commishTeam, freeAgencyTeam);
   createTeams(teamArray);
 }
-
-//   for(var teamNumber = 0; teamNumber <= DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
-//     fillArray(userTeams, teamNumber, league)
-//   };
-//   teamArray.push(commishTeam, freeAgencyTeam)
-//   createTeams(teamArray)
-// }
-
-// function fillArray(userTeams, teamNumber, league) {
-//     teamArray.push({
-//     name: userTeams[teamNumber-1],
-//     LeagueId: league.id,
-//   })
-// }
 
 function createTeams(teamArray) {
   db.Team
