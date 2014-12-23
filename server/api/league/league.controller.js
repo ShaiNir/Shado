@@ -180,19 +180,29 @@ function populateLeague(league) {
     "Walla Walla Krustys"
   ]
 
-  for(var teamNumber = 0; teamNumber <= DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
-    fillArray(userTeams, teamNumber, league)
-  };
-  teamArray.push(commishTeam, freeAgencyTeam)
-  createTeams(teamArray)
+  _(userTeams).forEach(function(teamName) {
+    teamArray.push({
+      name: teamName,
+      LeagueId: league.id
+    });
+  });
+  teamArray.push(commishTeam, freeAgencyTeam);
+  createTeams(teamArray);
 }
 
-function fillArray(userTeams, teamNumber, league) {
-    teamArray.push({
-    name: userTeams[teamNumber-1],
-    LeagueId: league.id,
-  })
-}
+//   for(var teamNumber = 0; teamNumber <= DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
+//     fillArray(userTeams, teamNumber, league)
+//   };
+//   teamArray.push(commishTeam, freeAgencyTeam)
+//   createTeams(teamArray)
+// }
+
+// function fillArray(userTeams, teamNumber, league) {
+//     teamArray.push({
+//     name: userTeams[teamNumber-1],
+//     LeagueId: league.id,
+//   })
+// }
 
 function createTeams(teamArray) {
   db.Team

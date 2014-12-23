@@ -2,6 +2,7 @@
 * Created by Sammy on 12/8/14
 **/
 var db = require('../api/models');
+var _ = require('lodash');
 
 var Populate = (function() {
     var teamArray =[]
@@ -17,10 +18,7 @@ var Populate = (function() {
             name: 'Test League',
             id: 1
         }).success(function(league){
-            pushSpecialTeams(league);
-            for(var teamNumber = 1; teamNumber <= DEFAULT_USER_TEAM_TOTAL; teamNumber ++) {
-                pushUserTeams(teamNumber, league)
-            }
+            pushTeams(league);
         }).success(function(){
             db.Team
                 .bulkCreate(teamArray)
@@ -32,7 +30,7 @@ var Populate = (function() {
         });
     }
 
-    var pushUserTeams = function(teamNumber, league) {
+    var pushTeams = function(league) {
 
           var userTeams = [
             "Springfield Isotopes",
@@ -57,14 +55,6 @@ var Populate = (function() {
             "Walla Walla Krustys"
           ]
 
-        var newTeam = {
-            name: userTeams[teamNumber-1],
-            LeagueId: league.id
-        }
-        teamArray.push(newTeam);
-    }
-
-    var pushSpecialTeams = function(league) {
         var commishTeam = {
             name: 'Commish Team',
             special: 'commish',
@@ -76,9 +66,15 @@ var Populate = (function() {
             special: 'freeagency',
             LeagueId: league.id,
         };
+
+        _(userTeams).forEach(function(teamName) {
+            teamArray.push({
+              name: teamName,
+              LeagueId: league.id
+            });
+          });
         teamArray.push(commishTeam, freeAgencyTeam);
     }
-
     return {
         fillLeague : _fillLeague
     }
