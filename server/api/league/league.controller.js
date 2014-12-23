@@ -3,6 +3,7 @@
 var _ = require('lodash');
 var db = require('../models');
 var League = db.League;
+var logger = require('../../logger')
 
 var teamArray = []
 
@@ -122,6 +123,7 @@ exports.settings = function(req, res) {
 exports.populate = function(req, res) {
   var user = req.user;
   if (user.role !== admin) {
+    logger.log("error", "Populating league is restricted to admins only");
     return res.send (401);
   }
   League.find(req.params.id).then(function (league) {
@@ -193,7 +195,7 @@ function createTeams(teamArray) {
   db.Team
       .bulkCreate(teamArray)
     .success(function() {
-      console.log("Success", "Suceeded in populating league");
+      logger.log("info", "Suceeded in populating league");
     }).error(function(err) {
       logger.log("error", "Failure to populate league")
     })
