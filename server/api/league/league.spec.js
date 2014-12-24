@@ -5,8 +5,9 @@ var request = require('supertest');
 var testUtil = require('../../components/test-util.js');
 var db = require('../models');
 var app =  require('../../app');
+var logger = require('../../logger')
 
-var populateTest = require('../../components/league_test.js');
+var leagueTest = require('../../components/league_test.js');
 
 db.sequelize.sync();
 
@@ -186,13 +187,13 @@ describe('GET /api/leagues/:id/populate', function() {
 
     before(function(done) {
         db.User.create(account1).success(function(adminUser) {
-            populateTest.fillLeague(adminUser);
+            leagueTest.fillLeague(adminUser);
         });
         done();
     })
 
     it('should have created a league', function(done) {
-        db.League.find(1).then(function(league) {
+        db.League.find().then(function(league) {
             done();
         });
     });
@@ -220,7 +221,7 @@ describe('GET /api/leagues/:id/populate', function() {
 
     it('should only allow adminUser to send and complete the request', function(done) {
         db.User.create(account2).success(function(commishUser) {
-            populateTest.fillLeague(commishUser);
+            leagueTest.fillLeague(commishUser);
         }).then(function () {
             should(true).ok
             done();

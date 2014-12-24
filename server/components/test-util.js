@@ -4,7 +4,7 @@
 var superagent = require('superagent');
 var agent = superagent.agent();
 var db = require('../api/models');
-var Promise = require("sequelize/node_modules/bluebird");
+// var Promise = require("sequelize/node_modules/bluebird");
 
 // Logs in as a user and returns their authorization token
 exports.loginUser = function(request, account, done){

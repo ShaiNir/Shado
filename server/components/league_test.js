@@ -20,11 +20,6 @@ var Populate = (function() {
         }).success(function(){
             db.Team
                 .bulkCreate(teamArray)
-                .success(function() {
-                    console.log("Success!")
-                }).error(function(err){
-                    console.log("Failure!")
-                });
         });
     }
 
