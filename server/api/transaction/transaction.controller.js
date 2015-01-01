@@ -25,40 +25,36 @@ exports.show = function(req, res) {
     });
 };
 
-// Creates a new transaction in the DB.
-/** Input Format:
-{
-    LeagueId: ###,
-    type: 'TYPE',
-    authorId: ID_OF_AUTHOR_TEAM,
-    TransactionItems: [
-      {
-        assetType: 'TYPE',
-        asset: ASSET_ID, // The ID of the asset in its respective table
-        sourceId: ###,
-        destinationId: ###
-      }
-    ]
-}
-*/
-exports.create = function(req, res) {
-    var transactionDetail = _.pick(req.body,['LeagueId','type','authorId']);
+/**
+ * Creates a new trade in the DB.
+ * Creates the transaction with type 'trade' and status 'pending'
+ * Then creates trade approvals for trade participants and commish
+ * Input Format:
+ {
+     LeagueId: ###,
+     type: 'TYPE',
+     authorId: ID_OF_AUTHOR_TEAM,
+     TransactionItems: [
+       {
+         assetType: 'TYPE',
+         asset: ASSET_ID, // The ID of the asset in its respective table
+         sourceId: ###,
+         destinationId: ###
+       }
+     ]
+ }
+ */
+exports.trade = function(req, res) {
+    var transactionDetail = _.pick(req.body,['LeagueId', 'seriesId','authorId']);
+    transactionDetail.status = 'pending';
+    transactionDetail.type = 'trade';
     var items = req.body.TransactionItems || {};
-    Promise.bind({}).then(function(){
-        return Transaction.create(transactionDetail).then(function(transaction) {
-            return Promise.map(items, function (itemDetail) {
-                return db.TransactionItem.create(itemDetail).then(function (item) {
-                    return item;
-                });
-            }).then(function (transactionItems) {
-                transaction.setTransactionItems(transactionItems);
-                return transaction.save();
-            });
-        })
-    }).then(function(transaction){
-        this.transaction = transaction;
-        return TransactionHelper.createTradeApprovals(transaction);
-    }).then(function(){
+    Promise.bind({}).then(function() {
+        return TransactionHelper.createTransaction(transactionDetail, items)
+    }).then(function(transaction) {
+        this.transaction = transaction
+        return TransactionHelper.createTradeApprovals(this.transaction);
+    }).then(function(approvals){
         return Transaction.find({where: {id: this.transaction.id}, include: [db.TransactionItem, db.TransactionApproval]})
             .then(function (returnTransaction) {
                 res.json(201, returnTransaction);

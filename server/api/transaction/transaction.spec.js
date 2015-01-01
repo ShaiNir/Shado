@@ -24,7 +24,7 @@ describe('GET /api/transactions', function() {
   });
 });
 
-describe('POST /api/transactions', function() {
+describe('POST /api/transactions/trade/', function() {
     var loginToken;
 
     before(function(done) {
@@ -42,69 +42,7 @@ describe('POST /api/transactions', function() {
         ];
         testUtil.clearSequelizeTables(typesToClear,done);
     });
-/*
-    before(function(done){
 
-        var account1 = {
-            email: 'test1@test.com',
-            password: 'test'
-        };
-        var account2 = {
-            email: 'test2@test.com',
-            password: 'test'
-        };
-
-        db.League.create({
-            name: 'League',
-            id: 1
-        }).success(function(league1){
-            db.User.create(account1).success(function(user1){
-                db.Team.create({
-                    name: 'Team',
-                    id: 1
-                }).success(function(team1){
-                    team1.setLeague(league1);
-                    team1.addUser(user1, {role: 'owner'});
-                    team1.save().success(function(){
-                        db.Player.create({
-                            name: 'Player 1',
-                            salary: 10000,
-                            id: 1
-                        }).success(function(player1){
-                            team1.addPlayer(player1, {status: 'inactive'});
-                            team1.save().success(function(){
-                                db.User.create(account2).success(function(user2){
-                                    db.Team.create({
-                                        name: 'Team',
-                                        id: 2
-                                    }).success(function(team2){
-                                        team2.setLeague(league1);
-                                        team2.addUser(user2, {role: 'owner'});
-                                        team2.save().success(function(){
-                                            db.Player.create({
-                                                name: 'Player 2',
-                                                salary: 20000,
-                                                id: 2
-                                            }).success(function(player2){
-                                                team2.addPlayer(player2, {status: 'inactive'});
-                                                team2.save().success(function(){
-                                                    testUtil.loginUser(request(app),account1,function(token){
-                                                        loginToken = token;
-                                                        done();
-                                                    });
-                                                });
-                                            });
-                                        });
-                                    });
-                                });
-                            });
-                        });
-                    });
-                });
-            });
-        });
-    });
-*/
     before(function(done){
         var account1 = {
             email: 'test1@test.com',
@@ -176,7 +114,7 @@ describe('POST /api/transactions', function() {
         })
     });
 
-    it('should respond with a full trade', function(done) {
+    it('should create an original trade with all transaction items and trade approvals', function(done) {
         var transaction = {
             LeagueId: 1,
             type: 'trade',
@@ -196,7 +134,7 @@ describe('POST /api/transactions', function() {
             ]
         }
 
-        var req = request(app).post('/api/transactions')
+        var req = request(app).post('/api/transactions/trade/')
             .set('Authorization',"Bearer " + loginToken)
             .type('json')
             .send(transaction);
@@ -211,7 +149,85 @@ describe('POST /api/transactions', function() {
                 res.body.TransactionItems.length.should.equal(2);
                 res.body.TransactionApprovals.should.be.instanceof(Array);
                 res.body.TransactionApprovals.length.should.equal(3);
+                res.body.seriesId.should.be.instanceof(Number);
+                res.body.seriesId.should.equal(res.body.id);
+                res.body.status.should.equal('pending');
                 done();
+            });
+    });
+
+    it('should create a counteroffer trade with all transaction items and trade approvals', function(done) {
+        var transaction1 = {
+            LeagueId: 1,
+            type: 'trade',
+            TransactionItems: [
+                {
+                    assetType: 'Player',
+                    asset: 1,
+                    sourceId: 1,
+                    destinationId: 2
+                },
+                {
+                    assetType: 'Player',
+                    asset: 2,
+                    sourceId: 2,
+                    destinationId: 1
+                }
+            ],
+            authorId: 1
+        };
+
+        var transaction2 = {
+            LeagueId: 1,
+            type: 'trade',
+            TransactionItems: [
+                {
+                    assetType: 'Player',
+                    asset: 1,
+                    sourceId: 1,
+                    destinationId: 2
+                },
+                {
+                    assetType: 'Player',
+                    asset: 2,
+                    sourceId: 2,
+                    destinationId: 1
+                }
+            ],
+            authorId: 2
+        };
+
+        var req = request(app).post('/api/transactions/trade/')
+            .set('Authorization',"Bearer " + loginToken)
+            .type('json')
+            .send(transaction1);
+
+        req.expect(201)
+            .expect('Content-Type', /json/)
+            .end(function(err, res1) {
+                if (err) return done(err);
+                res1.body.id.should.be.instanceof(Number);
+                // We say 'this offer counteroffers Offer X' by setting this offer's series ID to Offer X's series ID
+                transaction2.seriesId = res1.body.id;
+                var req2 = request(app).post('/api/transactions/trade/')
+                    .set('Authorization',"Bearer " + loginToken)
+                    .type('json')
+                    .send(transaction2);
+
+                req2.expect(201)
+                    .expect('Content-Type', /json/)
+                    .end(function(err2, res2) {
+                        if (err2) return done(err2);
+                        res2.body.should.be.instanceof(Object);
+                        res2.body.seriesId.should.be.instanceof(Number);
+                        res2.body.seriesId.should.equal(res1.body.seriesId);
+
+                        db.Transaction.find(res1.body.id).then(function(transaction1){
+                            transaction1.status.should.equal('rejected');
+                            transaction1.statusMessage.should.equal('Countered by Team 2')
+                            done();
+                        });
+                    });
             });
     });
 });
