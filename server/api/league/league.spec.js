@@ -176,21 +176,22 @@ describe('GET /api/leagues/:id/populate', function() {
     };
     before(function(done) {
         // Clear db before testing
-        db.User.destroy({}, {truncate: true}).success(function() {
-            db.League.destroy({},{truncate: true}).success(function() {
-                db.Team.destroy({},{truncate: true}).success(function() {
-                    done();
-                });
-            });
-        })
+        db.User.destroy({}, {truncate: true}).then(function() {
+            return db.League.destroy({},{truncate: true})
+        }).then(function() {
+            return db.Team.destroy({},{truncate: true})
+        }).then(function(){
+            done();
+        });
     });
 
     before(function(done) {
-        db.User.create(account1).success(function(adminUser) {
-            leagueTest.fillLeague(adminUser);
-        });
+        db.User.create(account1).then(function(adminUser) {
+            return leagueTest.fillLeague(adminUser);
+        }).then(function() {;
         done();
-    })
+        });
+    });
 
     it('should have created a league', function(done) {
         db.League.find().then(function(league) {
