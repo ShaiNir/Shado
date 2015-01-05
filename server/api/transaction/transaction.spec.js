@@ -27,7 +27,7 @@ describe('GET /api/transactions', function() {
 describe('POST /api/transactions/trade/', function() {
     var loginToken;
 
-    before(function(done) {
+    beforeEach(function(done) {
         // Clear db before testing
         var typesToClear = [
             db.Sport,
@@ -38,18 +38,19 @@ describe('POST /api/transactions/trade/', function() {
             db.PlayerAssignment,
             db.Transaction,
             db.TransactionItem,
-            db.TransactionApproval
+            db.TransactionApproval,
+            db.Message
         ];
         testUtil.clearSequelizeTables(typesToClear,done);
     });
 
-    before(function(done){
+    beforeEach(function(done){
         var account1 = {
-            email: 'test1@test.com',
+            email: 'test1@shadosports.com',
             password: 'test'
         };
         var account2 = {
-            email: 'test2@test.com',
+            email: 'test2@shadosports.com',
             password: 'test'
         };
 
@@ -106,6 +107,10 @@ describe('POST /api/transactions/trade/', function() {
                 special: 'commish',
                 id: 3
             })
+        }).then(function(commishTeam){
+            this.commishTeam = commishTeam;
+            this.commishTeam.addUser(this.user1, {role: 'owner'});
+            return this.commishTeam.save();
         }).then(function(){
             testUtil.loginUser(request(app),account1,function(token){
                 loginToken = token;
@@ -155,6 +160,44 @@ describe('POST /api/transactions/trade/', function() {
                 done();
             });
     });
+
+    it('should create messages for the pending transaction approvals', function(done) {
+        var transaction = {
+            LeagueId: 1,
+            type: 'trade',
+            TransactionItems: [
+                {
+                    assetType: 'Player',
+                    asset: 1,
+                    sourceId: 1,
+                    destinationId: 2
+                },
+                {
+                    assetType: 'Player',
+                    asset: 2,
+                    sourceId: 2,
+                    destinationId: 1
+                }
+            ],
+            authorId: 1
+        }
+
+        var req = request(app).post('/api/transactions/trade/')
+            .set('Authorization',"Bearer " + loginToken)
+            .type('json')
+            .send(transaction);
+
+        req.expect(201)
+            .expect('Content-Type', /json/)
+            .end(function(err, res) {
+                if (err) return done(err);
+                db.Message.findAll().then(function(messages){
+                    messages.length.should.equal(2);
+                    done();
+                })
+            });
+    });
+
 
     it('should create a counteroffer trade with all transaction items and trade approvals', function(done) {
         var transaction1 = {

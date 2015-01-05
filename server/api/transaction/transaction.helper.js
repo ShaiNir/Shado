@@ -1,6 +1,7 @@
 var _ = require('lodash');
 var Promise = require("sequelize/node_modules/bluebird");
 var db = require('../models');
+var MessageHelper = require ('../message/message.helper.js');
 
 var COUNTERED_MESSAGE = function(teamName){
     if(teamName != null){
@@ -9,6 +10,33 @@ var COUNTERED_MESSAGE = function(teamName){
     return 'Countered'
 }
 
+// Creates a TransactionApproval based on the given attributes object.
+// If status is 'pending', creates a system message to the approver team and sends it out as an e-mail
+// Returns a promise that resolves with the created Approval.
+exports.createApproval = function(approvalInfo){
+    return Promise.bind({}).then(function (approval) {
+        return db.TransactionApproval.create(approvalInfo)
+    }).then(function (approval) {
+        this.approval = approval;
+        if(this.approval.status == 'pending'){
+            messageDetail = {
+                _parameters: JSON.stringify({
+                    subject: 'You have a trade offer pending approval',
+                    text: 'Log in to shadosports.com to see the offer details.'
+                }),
+                recipientId: this.approval.TeamId,
+                type: 'notification'
+            }
+            return db.Message.create(messageDetail)
+        }
+        return Promise.resolve(null)
+    }).then(function(message){
+        if(message != null) {
+            MessageHelper.messageEmail(message.id);
+        }
+        return this.approval;
+    })
+}
 
 // Creates initial TransactionApproval items for every team involved in the transaction.
 // If there is an author specified that last edited the transaction, that author's approval is automatically accepted.
@@ -40,11 +68,7 @@ exports.createAssetOwnerApprovals = function(transactionId){
             if (transaction.authorId == teamId) {
                 approvalInfo.status = 'approved';
             }
-            return db.TransactionApproval.create(approvalInfo).then(function (approval) {
-                return approval;
-            });
-        }).then(function(approvals){
-            return approvals;
+            return exports.createApproval(approvalInfo);
         });
 
     });
@@ -79,9 +103,7 @@ exports.createCommishApproval = function(transactionId){
             approvalInfo.status = 'approved';
         }
 
-        return db.TransactionApproval.create(approvalInfo).then(function (approval) {
-            return approval;
-        });
+        return exports.createApproval(approvalInfo);
     });
 }
 

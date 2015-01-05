@@ -13,6 +13,40 @@ var Promise = require("sequelize/node_modules/bluebird");
 
 var NOREPLY_ADDRESS = 'Shado Sports <noreply@shadosports.com>';
 
+// Based on the message's type, each respective function gives the text for e-mail subjects.
+var SUBJECTS_BY_TYPE = {
+    '' : function(message){
+        return (message.recipient.League.name + " message for " + message.recipient.name);
+    },
+    'notification' : function(message){
+        return (message.recipient.League.name + " notification for " + message.recipient.name);
+    },
+    'pm': function(message){
+        if(message.params.subject != null){
+            return "[" + message.recipient.League.name + "] " + message.params.subject
+        }
+        return (message.recipient.League.name + " private message from " + message.sender.name );
+    }
+}
+
+// Based on the message's type, each respective function gives HTML to head the e-mail with.
+var HEADERS_BY_TYPE = {
+    '': function(message){
+        return "<h4>"+message.recipient.name+" received a message:</h4>"
+    },
+    'notification': function(message){
+        return "<h4>"+message.recipient.name+" received an notification:</h4>"
+    },
+    'pm': function(message){
+        var html = "<h5>"+message.sender.name+" sent "+message.recipient.name+" a private message:</h5>"
+        if(message.params.subject != null){
+            html = html + "<h4>" + message.params.subject + "</h4>"
+        }
+        return html
+    }
+}
+
+
 // Sends mail asynchronously with nodemailer
 // Returns a promise that resolves with info about the e-mail
 var sendEmail = function(mailOptions) {
@@ -64,12 +98,20 @@ var TEAM_MESSAGE_INCLUDES = [{
         required: false
     }];
 
+var getHeader = function(message){
+    return HEADERS_BY_TYPE[(message.type || '')](message)
+}
+
+var getSubject = function(message){
+    return SUBJECTS_BY_TYPE[(message.type || '')](message)
+}
+
 // Takes a message instance with TEAM_MESSAGE_INCLUDES included
 var sendMessage = function(message){
     var toAddresses = teamAddressList(message.recipient);
-    var bodyHtml = "<h3>"+message.sender.name+" sent "+message.recipient.name+" a private message:</h3>"
+    var bodyHtml = getHeader(message)
     bodyHtml = bodyHtml + displayMessage(message);
-    var subject = (message.recipient.League.name + " message for " + message.recipient.name);
+    var subject = getSubject(message)
     var mailOptions = {
         from: NOREPLY_ADDRESS, // sender address
         to: toAddresses, // list of receivers

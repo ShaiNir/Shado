@@ -78,7 +78,7 @@ if (!global.hasOwnProperty('db')) {
 
     global.db.Message.belongsTo(global.db.Team, {as: 'sender'});
     global.db.Message.belongsTo(global.db.Team, {as: 'recipient'}); // Used for messages to specific teams
-    global.db.Message.belongsTo(global.db.League); // Only used for league-wide messages
+    global.db.Message.belongsTo(global.db.League); // Recipient league. Only used for league-wide messages
 
     global.db.LeagueEvent.belongsTo(global.db.League);
 }
