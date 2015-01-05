@@ -12,7 +12,7 @@ var Populate = (function() {
             console.log("Error, user is not an admin, user role is: " + user.role);
             return false;
         }
-        db.League.create({
+        return db.League.create({
             name: 'Test League',
             id: 1
         }).success(function(league){
