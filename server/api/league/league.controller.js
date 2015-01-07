@@ -130,9 +130,10 @@ exports.populate = function(req, res) {
     if (!league) {
       return res.send(404);
     }
-    populateLeague(league);
-    return res.send(204, league);
-    }, function(error) {
+    return populateLeague(league);
+    }).then (function() {
+      return res.send(204, league);
+    }).catch (function(error) {
       return handleError(res, error);
     });
 };
@@ -188,11 +189,11 @@ function populateLeague(league) {
     });
   });
   teamArray.push(commishTeam, freeAgencyTeam);
-  createTeams(teamArray);
+  return createTeams(teamArray);
 }
 
 function createTeams(teamArray) {
-  db.Team
+  return db.Team
       .bulkCreate(teamArray)
     .success(function() {
       logger.log("info", "Suceeded in populating league");
