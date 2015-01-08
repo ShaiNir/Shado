@@ -4,5 +4,6 @@
 // ===========================
 module.exports = {
     dbCreds: {db: 'shadotest', user: 'shado', dialect: 'postgres'},
-    schedulerOn: false
+    schedulerOn: false,
+    reallySendEmails:false
 };

@@ -52,6 +52,7 @@ var HEADERS_BY_TYPE = {
 var sendEmail = function(mailOptions) {
     var transport = mailer.createTransport(env.emailTransportOptions)
     var sendMailAsync = Promise.promisify(transport.sendMail, transport);
+    if(!env.reallySendEmails){ return Promise.resolve({}) }
     return sendMailAsync(mailOptions);
 };
 
