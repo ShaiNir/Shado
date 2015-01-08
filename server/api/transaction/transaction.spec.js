@@ -273,6 +273,67 @@ describe('POST /api/transactions/trade/', function() {
                     });
             });
     });
+
+
+    it('should reject a transaction item with missing information', function(done) {
+        var transaction = {
+            LeagueId: 1,
+            type: 'trade',
+            TransactionItems: [
+                {
+                    assetType: 'Player',
+                    asset: 1,
+                    destinationId: 1
+                }
+            ]
+        }
+
+        var req = request(app).post('/api/transactions/trade/')
+            .set('Authorization',"Bearer " + loginToken)
+            .type('json')
+            .send(transaction);
+
+        req.expect(500)
+            .expect('Content-Type', /json/)
+            .end(function(err, res) {
+                if (err) return done(err);
+                res.body.should.be.instanceof(Array);
+                res.body[0].should.be.instanceof(String);
+                res.body[0].toLowerCase().indexOf('source').should.be.greaterThan(-1);
+                done();
+            });
+    });
+
+    it('should reject a transaction item in which the source team does not own the asset', function(done) {
+        var transaction = {
+            LeagueId: 1,
+            type: 'trade',
+            TransactionItems: [
+                {
+                    assetType: 'Player',
+                    asset: 1,
+                    sourceId: 2,
+                    destinationId: 1
+                }
+            ]
+        }
+
+        var req = request(app).post('/api/transactions/trade/')
+            .set('Authorization',"Bearer " + loginToken)
+            .type('json')
+            .send(transaction);
+
+        req.expect(500)
+            .expect('Content-Type', /json/)
+            .end(function(err, res) {
+                if (err) return done(err);
+                res.body.should.be.instanceof(Array);
+                res.body[0].should.be.instanceof(String);
+                res.body[0].toLowerCase().indexOf('player').should.be.greaterThan(-1);
+                done();
+            });
+    });
+
 });
 
 

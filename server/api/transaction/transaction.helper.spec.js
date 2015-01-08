@@ -9,85 +9,92 @@ var testUtil = require('../../components/test-util.js');
 
 db.sequelize.sync();
 
-var setUpLeague= function(done){
-    db.League.create().then(function(league){
-        db.Team.create({name: "Commish", LeagueId: league.id, special: 'commish'}).then(function(commish){
-            db.Team.create({name: "Team 1", LeagueId: league.id}).then(function(team1){
-                db.Team.create({name: "Team 2", LeagueId: league.id}).then(function(team2){
-                    db.Player.create({name: "Player 1"}).then(function(player1){
-                        team1.addPlayer(player1, {status: 'active'});
-                        team1.save().then(function(){
-                            db.Player.create({name: "Player 2"}).then(function(player2){
-                                team2.addPlayer(player2, {status: 'active'});
-                                team2.save().then(function(){
-                                    var models = {
-                                        league: league,
-                                        commish: commish,
-                                        team1: team1,
-                                        team2: team2,
-                                        player1: player1,
-                                        player2: player2
-                                    }
-                                    done(models);
-                                });
-                            });
-                        });
-                    });
-                });
-            });
-        });
-    });
+// Returns a promise with a context containing all the models
+var setUpLeague = function(){
+    return Promise.bind({}).then(function(){
+        return db.League.create();
+    }).then(function(league){
+        this.league = league;
+        return db.Team.create({name: "Commish", LeagueId: this.league.id, special: 'commish'});
+    }).then(function(commish){
+        this.commish = commish;
+        return db.Team.create({name: "Team 1", LeagueId: this.league.id, budget: 1000});
+    }).then(function(team1){
+        this.team1 = team1;
+        return db.Team.create({name: "Team 2", LeagueId: this.league.id, budget: 1000});
+    }).then(function(team2){
+        this.team2 = team2;
+        return db.Player.create({name: "Player 1"});
+    }).then(function(player1){
+        this.player1 = player1;
+        this.team1.addPlayer(player1, {status: 'active'});
+        return this.team1.save();
+    }).then(function(team1){
+        this.team1 = team1;
+        return db.Player.create({name: "Player 2"});
+    }).then(function(player2){
+        this.player2 = player2;
+        this.team2.addPlayer(player2, {status: 'active'});
+        return this.team2.save();
+    }).then(function(team2){
+        this.team2 = team2;
+        return this;
+    })
 };
 
 var setUpSimpleTrade = function(done){
-    setUpLeague(function(su) {
-        db.Transaction.create({type: 'trade', LeagueId: su.league.id, authorId: su.team1.id}).then(function (transaction) {
-            var items = [
-                {
-                    assetType: 'Player',
-                    asset: su.player1.id,
-                    sourceId: su.team1.id,
-                    destinationId: su.team2.id,
-                    TransactionId: transaction.id
-                },
-                {
-                    assetType: 'Player',
-                    asset: su.player2.id,
-                    sourceId: su.team2.id,
-                    destinationId: su.team1.id,
-                    TransactionId: transaction.id
-                }
-            ];
-            db.TransactionItem.bulkCreate(items).then(function () {
-                su.transaction = transaction;
-                done(su);
-            });
-        });
+    return setUpLeague().then(function(su) {
+        return db.Transaction.create({type: 'trade', LeagueId: this.league.id, authorId: this.team1.id});
+    }).then(function (transaction) {
+        this.transaction = transaction;
+        var items = [
+            {
+                assetType: 'Player',
+                asset: this.player1.id,
+                sourceId: this.team1.id,
+                destinationId: this.team2.id,
+                TransactionId: this.transaction.id
+            },
+            {
+                assetType: 'Player',
+                asset: this.player2.id,
+                sourceId: this.team2.id,
+                destinationId: this.team1.id,
+                TransactionId: this.transaction.id
+            },
+            {
+                assetType: 'Budget',
+                asset: (this.team2.budget / 2),
+                sourceId: this.team2.id,
+                destinationId: this.team1.id,
+                TransactionId: this.transaction.id
+            }
+        ];
+        return db.TransactionItem.bulkCreate(items)
+    }).then(function (transactionItems) {
+        this.transactionItems = transactionItems;
+        return this;
     });
 }
 
 describe('Transaction Helper', function() {
     beforeEach(function(done) {
         // Clear db before testing
-        db.TransactionItem.destroy({},{truncate: true}).then(function() {
-            db.TransactionApproval.destroy({},{truncate: true}).then(function() {
-                db.Transaction.destroy({},{truncate: true}).then(function() {
-                    db.Team.destroy({},{truncate: true}).then(function() {
-                        db.Player.destroy({},{truncate: true}).then(function() {
-                            db.LeagueSetting.destroy({},{truncate: true}).then(function() {
-                                db.League.destroy({},{truncate: true}).then(function() {
-                                     done();
-                                });
-                            });
-                        });
-                    });
-                });
-            });
-        });
+        var typesToClear = [
+            db.Team,
+            db.League,
+            db.LeagueSetting,
+            db.Player,
+            db.PlayerAssignment,
+            db.Transaction,
+            db.TransactionItem,
+            db.TransactionApproval
+        ];
+        testUtil.clearSequelizeTables(typesToClear,done);
     });
 
     it('should create team transaction approvals', function(done) {
-        setUpSimpleTrade(function (su) {
+        setUpSimpleTrade().then(function (su) {
             TransactionHelper.createAssetOwnerApprovals(su.transaction.id).then(function (approvals) {
                 approvals.should.be.instanceOf(Array);
                 approvals.length.should.equal(2);
@@ -108,7 +115,7 @@ describe('Transaction Helper', function() {
     });
 
     it('should create a commish transaction approval', function(done) {
-        setUpSimpleTrade(function (su) {
+        setUpSimpleTrade().then(function (su) {
             var commishSetting = {LeagueId: su.league.id, key: 'TRADE_COMMISH_AUTO_APPROVE', value: 'false'};
             db.LeagueSetting.create(commishSetting).then(function () {
                 TransactionHelper.createCommishApproval(su.transaction.id).then(function (approval) {
@@ -122,7 +129,7 @@ describe('Transaction Helper', function() {
     });
 
     it('should create a commish transaction approval with auto-approval', function(done) {
-        setUpSimpleTrade(function (su) {
+        setUpSimpleTrade().then(function (su) {
             var commishSetting = {LeagueId: su.league.id, key: 'TRADE_COMMISH_AUTO_APPROVE', value: 'true'};
             db.LeagueSetting.create(commishSetting).then(function () {
                 TransactionHelper.createCommishApproval(su.transaction.id).then(function (approval) {
@@ -132,6 +139,99 @@ describe('Transaction Helper', function() {
                     done();
                 });
             });
+        });
+    });
+})
+
+describe('Verify Asset Owner', function(){
+    beforeEach(function(done) {
+        // Clear db before testing
+        var typesToClear = [
+            db.Team,
+            db.League,
+            db.LeagueSetting,
+            db.Player,
+            db.PlayerAssignment,
+            db.Transaction,
+            db.TransactionItem,
+            db.TransactionApproval
+        ];
+        testUtil.clearSequelizeTables(typesToClear,done);
+    });
+
+    it('should pass a valid transaction', function(done){
+        setUpLeague().then(function(){
+            var items = [
+                {
+                    assetType: 'Player',
+                    asset: this.player1.id,
+                    sourceId: this.team1.id,
+                    destinationId: this.team2.id
+                },
+                {
+                    assetType: 'Player',
+                    asset: this.player2.id,
+                    sourceId: this.team2.id,
+                    destinationId: this.team1.id
+                },
+                {
+                    assetType: 'Budget',
+                    asset: (this.team2.budget / 2),
+                    sourceId: this.team2.id,
+                    destinationId: this.team1.id
+                }
+            ];
+            return TransactionHelper.verifyAssetOwners(items);
+        }).then(function(errors) {
+            errors.should.be.instanceOf(Array);
+            errors.length.should.equal(0);
+            done()
+        });
+    });
+
+    it('should fail an invalid transaction with a player improperly assigned', function(done){
+        setUpLeague().then(function(){
+            var items = [
+                {
+                    assetType: 'Player',
+                    asset: this.player2.id,
+                    sourceId: this.team1.id,
+                    destinationId: this.team2.id
+                }
+            ];
+            return TransactionHelper.verifyAssetOwners(items);
+        }).then(function(errors) {
+            errors.length.should.equal(1);
+            errors[0].should.be.instanceOf(String);
+            errors[0].indexOf('player').should.be.greaterThan(-1);
+            done()
+        });
+    });
+
+    it('should also fail an invalid transaction with too much budget charged to one team', function(done){
+        setUpLeague().then(function(){
+            var items = [
+                {
+                    assetType: 'Player',
+                    asset: this.player2.id,
+                    sourceId: this.team1.id,
+                    destinationId: this.team2.id
+                },
+                {
+                    assetType: 'Budget',
+                    asset: (this.team2.budget * 2),
+                    sourceId: this.team2.id,
+                    destinationId: this.team1.id
+                }
+            ];
+            return TransactionHelper.verifyAssetOwners(items);
+        }).then(function(errors) {
+            errors.length.should.equal(2);
+            errors[0].should.be.instanceOf(String);
+            errors[0].indexOf('player').should.be.greaterThan(-1);
+            errors[1].should.be.instanceOf(String);
+            errors[1].indexOf('budget').should.be.greaterThan(-1);
+            done()
         });
     });
 })

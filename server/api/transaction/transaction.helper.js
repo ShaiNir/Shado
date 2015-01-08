@@ -176,3 +176,61 @@ exports.createTransaction = function(transactionDetail, items){
         return this.transaction;
     });
 }
+
+var WRONG_PLAYER_OWNERSHIP_MESSAGE = function(team){
+    return team.name + ' does not have one of the proposed players on its roster.'
+}
+var INSUFFICIENT_BUDGET_MESSAGE = function(budgetTransfered, team){
+    return budgetTransfered + ' is less than ' + team.name + '\'s available budget of ' + team.budget + '.'
+}
+var MISSING_TRANSACTION_ITEM_INFO_MESSAGES = {
+    asset: 'One or more transaction items is missing an asset',
+    assetType: 'One or more transaction items is missing an asset type',
+    sourceId: 'One or more transaction items is missing a source team',
+    destinationId: 'One or more transaction items is missing a destination team'
+}
+
+//Verifies that every asset in a list of proposed transaction items is owned by the correct source team
+// Returns a promise that resolves with a list of failure reasons
+exports.verifyAssetOwners = function(transactionItems){
+    var sourceTeamIds = _.unique(_.map(transactionItems,'sourceId'))
+    var teamsQuery = {
+        where: {id: {in: sourceTeamIds}},
+        include: [{
+            model: db.Player,
+            required: false
+        }]
+    }
+    return db.Team.findAll(teamsQuery).then(function(teams){
+        var errors = []
+        _.each(transactionItems, function(item){
+            // For each possible key in transactionItem, check if it's missing and if so add a specific message
+            var malformedItem = false;
+            _.each(_.keys(MISSING_TRANSACTION_ITEM_INFO_MESSAGES), function(key){
+                if(item[key] == null){
+                    errors.push(MISSING_TRANSACTION_ITEM_INFO_MESSAGES[key])
+                    malformedItem = true;
+                }
+            })
+            if(!malformedItem) {
+                var sourceTeam = _.find(teams, {id: item.sourceId})
+                switch (item.assetType) {
+                    case 'Player':
+                        var sourceHasPlayer = _.any(sourceTeam.Players, function (player) {
+                            return player.id == item.asset;
+                        })
+                        if (!sourceHasPlayer) {
+                            errors.push(WRONG_PLAYER_OWNERSHIP_MESSAGE(sourceTeam))
+                        }
+                        break;
+                    case 'Budget':
+                        if (sourceTeam.budget < item.asset) {
+                            errors.push(INSUFFICIENT_BUDGET_MESSAGE(item.asset, sourceTeam));
+                        }
+                        break;
+                }
+            }
+        })
+        return _.uniq(errors);
+    })
+}

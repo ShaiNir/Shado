@@ -50,6 +50,11 @@ exports.trade = function(req, res) {
     transactionDetail.type = 'trade';
     var items = req.body.TransactionItems || {};
     Promise.bind({}).then(function() {
+        return TransactionHelper.verifyAssetOwners(req.body.TransactionItems);
+    }).then(function(errors) {
+        if(errors.length > 0){
+            return Promise.reject(errors);
+        }
         return TransactionHelper.createTransaction(transactionDetail, items)
     }).then(function(transaction) {
         this.transaction = transaction
