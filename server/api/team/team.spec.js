@@ -6,6 +6,10 @@ var request = require('supertest');
 var db = require('../models');
 var testUtil = require('../../components/test-util.js');
 
+var fillTest = require('../../components/fill_teams_test.js');
+
+db.sequelize.sync();
+
 describe('GET /api/teams', function() {
 
   it('should respond with JSON array', function(done) {
@@ -61,4 +65,43 @@ describe('GET /api/teams/:id/players', function() {
           done();
       });
   });
+});
+
+
+describe ('POST /api/teams/fill', function() {
+  var account1 = {
+        email: 'test1@test.com',
+        password: 'test',
+        role: 'admin'
+  };
+
+  before(function(done) {
+    // Clear db before testing
+    db.User.destroy({}, {truncate: true}).then(function() {
+      return db.Team.destroy({}, {truncate: true})
+    }).then(function() {
+      return db.Player.destroy({}, {truncate: true})
+    }).then(function() {
+      return db.PlayerAssignment.destroy({}, {truncate: true})
+    }).then(function() {
+      done();
+    });
+  });
+
+  before(function(done) {
+    db.User.create(account1).then(function(adminUser) {
+      return fillTest.fillTeams(adminUser);
+    }).then(function() {
+     done();
+    });
+  });
+
+  it('should have prepared 3 teams', function(done) {
+    db.Team.findAndCountAll().then(function(result) {
+      return result.count.should.equal(3);
+    }).then(function() {
+      done();
+    });
+  });
+
 });

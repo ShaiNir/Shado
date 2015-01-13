@@ -73,6 +73,15 @@ exports.players = function(req, res) {
     });
 };
 
+exports.players = function(req, res) {
+    Team.findAll().then(function (teams) {
+        return res.json(200, teams);
+    }, function(error){
+        return handleError(res, error);
+    });
+};
+
+
 function handleError(res, error) {
     return res.send(500, error);
 }

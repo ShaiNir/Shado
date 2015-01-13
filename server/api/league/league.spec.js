@@ -165,7 +165,7 @@ describe('GET /api/leagues/:id/rival_teams', function() {
 Written by Sammy on 12/03/14
 */
 
-describe('GET /api/leagues/:id/populate', function() {
+describe('POST /api/leagues/:id/populate', function() {
     var account1 = {
         email: 'test1@test.com',
         password: 'test',

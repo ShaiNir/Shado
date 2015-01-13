@@ -18,8 +18,7 @@ var Populate = (function() {
         }).success(function(league){
             pushTeams(league);
         }).success(function(){
-            db.Team
-                .bulkCreate(teamArray)
+            db.Team.bulkCreate(teamArray)
         });
     }
 
