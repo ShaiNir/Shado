@@ -5,6 +5,7 @@ var db = require('../models');
 var Promise = require("sequelize/node_modules/bluebird");
 var Transaction = db.Transaction;
 var TransactionHelper = require('../transaction/transaction.helper');
+var TeamHelper = require('../team/team.helper');
 
 // Get list of transactions
 exports.index = function(req, res) {
@@ -68,6 +69,24 @@ exports.trade = function(req, res) {
         return handleError(res, error);
     });
 };
+
+// Approve or reject a trade.
+// Request body:
+// {TeamId: [ID of team approving or rejecting], isApproved: [whether trade is approved or rejected]}
+exports.approve = function(req,res){
+    TeamHelper.verifyStake(req.user.id, req.body.TeamId).then(function(authorized){
+        if(authorized){
+            TransactionHelper.acceptOrReject(req.params.id,req.body.TeamId,req.body.isApproved).then(function(){
+                return res.json(200)
+            })
+        } else {
+            res.send(403);
+        }
+    }).catch(function(error) {
+        handleError(res, error);
+    });
+
+}
 
 // Updates an existing transaction in the DB.
 exports.update = function(req, res) {

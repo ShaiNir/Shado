@@ -2,6 +2,8 @@ var should = require('should');
 var db =  require('../models');
 var TeamHelper = require('../team/team.helper');
 var _ = require('lodash');
+var testUtil = require('../../components/test-util.js');
+var Promise = require("sequelize/node_modules/bluebird");
 
 db.sequelize.sync();
 
@@ -183,3 +185,58 @@ describe('getAutoPurgedPlayers', function() {
         });
     });
 });
+
+
+
+describe('TeamHelper.verifyStake', function() {
+    beforeEach(function(done) {
+        // Clear db before testing
+        var typesToClear = [
+            db.Team,
+            db.League,
+            db.Stake,
+            db.User
+        ];
+        testUtil.clearSequelizeTables(typesToClear,done);
+    })
+
+    var setUpTeamAndUsers = function(){
+        return Promise.bind({}).then(function(){
+            return db.League.create();
+        }).then(function(league) {
+            this.league = league;
+            return db.Team.create({name: "Team", LeagueId: this.league.id});
+        }).then(function(team) {
+            this.team = team;
+            return db.User.create({name: "User 1"});
+        }).then(function(user1) {
+            this.user1 = user1;
+            this.team.addUser(user1, {role: 'owner'});
+            return this.team.save()
+        }).then(function(team) {
+            this.team = team;
+            return db.User.create({name: "User 2"});
+        }).then(function(user2) {
+            this.user2 = user2;
+            return this;
+        })
+    }
+
+    it('Should accept a correct user', function(done){
+        setUpTeamAndUsers().then(function(){
+            return TeamHelper.verifyStake(this.user1.id,this.team.id)
+        }).then(function(result){
+            result.should.be.ok;
+            done();
+        });
+    })
+
+    it('Should reject an incorrect user', function(done){
+        setUpTeamAndUsers().then(function(){
+            return TeamHelper.verifyStake(this.user2.id,this.team.id)
+        }).then(function(result){
+            result.should.not.be.ok;
+            done();
+        });
+    })
+})

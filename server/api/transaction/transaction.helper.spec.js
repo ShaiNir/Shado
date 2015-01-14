@@ -42,9 +42,15 @@ var setUpLeague = function(){
     })
 };
 
-var setUpSimpleTrade = function(done){
-    return setUpLeague().then(function(su) {
-        return db.Transaction.create({type: 'trade', LeagueId: this.league.id, authorId: this.team1.id});
+var setUpSimpleTrade = function(){
+    return setUpLeague().then(function() {
+        var transactionInfo = {
+            type: 'trade',
+            LeagueId: this.league.id,
+            authorId: this.team1.id,
+            status: 'pending'
+        }
+        return db.Transaction.create(transactionInfo);
     }).then(function (transaction) {
         this.transaction = transaction;
         var items = [
@@ -75,6 +81,35 @@ var setUpSimpleTrade = function(done){
         this.transactionItems = transactionItems;
         return this;
     });
+}
+
+var setUpTradeApprovals = function(){
+    return setUpSimpleTrade().then(function() {
+        var approvalInfo = [
+            {
+                "TeamId": this.team1.id,
+                "role": "participant",
+                "status": "approved",
+                "TransactionId": this.transaction.id
+            },
+            {
+                "TeamId": this.team2.id,
+                "role": "participant",
+                "status": "pending",
+                "TransactionId": this.transaction.id
+            },
+            {
+                "TeamId": this.commish.id,
+                "role": "commish",
+                "status": "pending",
+                "TransactionId": this.transaction.id
+            }
+        ]
+        return db.TransactionApproval.bulkCreate(approvalInfo)
+    }).then(function (approvals) {
+        this.transactionApprovals = _.indexBy(approvals,'TeamId');
+        return this;
+    })
 }
 
 describe('Transaction Helper', function() {
@@ -234,4 +269,42 @@ describe('Verify Asset Owner', function(){
             done()
         });
     });
+})
+
+
+describe('acceptOrReject', function() {
+    beforeEach(function (done) {
+        // Clear db before testing
+        var typesToClear = [
+            db.Team,
+            db.League,
+            db.LeagueSetting,
+            db.Player,
+            db.PlayerAssignment,
+            db.Transaction,
+            db.TransactionItem,
+            db.TransactionApproval
+        ];
+        testUtil.clearSequelizeTables(typesToClear, done);
+    });
+
+    it('should correctly accept a trade', function (done) {
+        setUpTradeApprovals().then(function(){
+            return TransactionHelper.acceptOrReject(this.transaction.id, this.team2.id, true);
+        }).then(function(approval){
+            approval.status.should.equal('approved');
+            approval.TeamId.should.equal(this.team2.id);
+            done();
+        })
+    })
+
+    it('should correctly reject a trade', function (done) {
+        setUpTradeApprovals().then(function(){
+            return TransactionHelper.acceptOrReject(this.transaction.id, this.commish.id, false);
+        }).then(function(approval){
+            approval.status.should.equal('rejected');
+            approval.TeamId.should.equal(this.commish.id);
+            done();
+        })
+    })
 })

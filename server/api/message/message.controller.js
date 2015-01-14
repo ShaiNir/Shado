@@ -15,7 +15,7 @@ var validateUserMemberOfSender = function(req, res, teams){
     var authorized = _.any(sender.Users, function (user) {
         return user.id == req.user.id
     });
-    if (!authorized){ return res.send(401) };
+    if (!authorized){ return res.send(403) };
     return null;
 }
 

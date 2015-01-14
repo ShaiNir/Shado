@@ -234,3 +234,31 @@ exports.verifyAssetOwners = function(transactionItems){
         return _.uniq(errors);
     })
 }
+
+
+// Accept or reject a trade proposal
+// If the transaction status is not pending, do not change the approval.
+// Returns a promise
+exports.acceptOrReject = function(transactionId, teamId, isApproved){
+    var query = {
+        where: {id: transactionId},
+        include: [{
+            model: db.TransactionApproval,
+            required: false
+        }]
+    }
+    return db.Transaction.find(query).then(function(transaction){
+        if(!transaction){
+            return Promise.reject("No transaction found with given ID " + transaction.id)
+        }
+        if(transaction.status != 'pending'){
+            return Promise.reject("Transaction status is '" + transaction.status + "' so it is ineligible to approval.");
+        }
+        var approval = _.find(transaction.TransactionApprovals, function(a){return a.TeamId == teamId});
+        if(approval == null){
+            return Promise.reject("Team " + teamId + " does not have a say in the transaction.");
+        }
+        approval.status = isApproved ? 'approved' : 'rejected';
+        return approval.save();
+    })
+}

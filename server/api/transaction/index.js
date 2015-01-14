@@ -2,6 +2,7 @@
 
 var express = require('express');
 var controller = require('./transaction.controller');
+var auth = require('../../auth/auth.service');
 
 var router = express.Router();
 
@@ -11,5 +12,6 @@ router.post('/trade/', controller.trade);
 router.put('/:id', controller.update);
 router.patch('/:id', controller.update);
 router.delete('/:id', controller.destroy);
+router.post('/:id/approve', auth.isAuthenticated(), controller.approve);
 
 module.exports = router;

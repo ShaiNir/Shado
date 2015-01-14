@@ -124,7 +124,7 @@ exports.populate = function(req, res) {
   var user = req.user;
   if (user.role !== admin) {
     logger.log("error", "Populating league is restricted to admins only");
-    return res.send (401);
+    return res.send (403);
   }
   League.find(req.params.id).then(function (league) {
     if (!league) {
