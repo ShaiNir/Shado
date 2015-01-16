@@ -14,7 +14,7 @@ var db =  require('../../api/models');
 var _ = require('lodash');
 var logger = require('../../logger');
 var EventFunctions = require(__dirname + '/event_functions.js');
-var Promise = require("sequelize/node_modules/bluebird");
+var BPromise = require("sequelize/node_modules/bluebird");
 
 /**
  * Fetches every LeagueEvent that has a scheduled time before now() and
@@ -40,7 +40,7 @@ var fetchEvents = function(){
                     return events;
                 });
             }
-            return Promise.resolve([]);
+            return BPromise.resolve([]);
         }).then(function(events){
             t.commit();
             return events;
@@ -59,7 +59,7 @@ exports.fetchEvents = fetchEvents;
  * @param event
  */
 var runEvent = function(event){
-    Promise.try(function(){
+    BPromise.try(function(){
         var params = event.params;
         params.LeagueId = event.LeagueId;
         var promise = EventFunctions[event.function](params);

@@ -1,7 +1,7 @@
 var _ = require('lodash');
 var db = require('../models');
 var SettingHelper = require('../league_setting/league_setting.helper');
-var Promise = require("sequelize/node_modules/bluebird");
+var BPromise = require("sequelize/node_modules/bluebird");
 
 var VALIDATION_MESSAGES = {
     TOO_MANY_PLAYERS: "This team has more players on roster than the league roster maximum.",
@@ -120,10 +120,10 @@ exports.getAutoPurgedPlayers = function(actualTeam){
 // Returns a promise that resolves with true if the user is authorized or false otherwise
 exports.verifyStake = function(userId, teamId){
     var teamQuery = { where: {id: teamId}, include: [db.User]}
-    return Promise.bind({}).then(function() {
+    return BPromise.bind({}).then(function() {
         return db.Team.findOne(teamQuery)
     }).then(function(team) {
-        if(!team){ return Promise.reject("No team found with given ID " + teamIds)}
+        if(!team){ return BPromise.reject("No team found with given ID " + teamIds)}
         return _.any(team.Users, function(user){
             return user.id == userId
         })

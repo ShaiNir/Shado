@@ -7,7 +7,7 @@
  */
 
 var logger = require('../../logger');
-var Promise = require("sequelize/node_modules/bluebird");
+var BPromise = require("sequelize/node_modules/bluebird");
 var _ = require("lodash");
 
 var helpers = {
@@ -22,7 +22,7 @@ exports.log = function(options){
         options.severity = 'info';
     }
     logger.log(options.severity, options.text);
-    return Promise.resolve(null);
+    return BPromise.resolve(null);
 }
 
 /**
@@ -31,7 +31,7 @@ exports.log = function(options){
 exports.leagueDigest = function(options){
     // Ensure daySpan is an integer
     if(options.daySpan == null || !(typeof options.daySpan === 'number') || !(options.daySpan % 1 === 0)){
-        return Promise.reject(new Error('daySpan is not an integer'));
+        return BPromise.reject(new Error('daySpan is not an integer'));
     }
     return helpers.Message.digestEmail(options.LeagueId, options.daySpan);
 };

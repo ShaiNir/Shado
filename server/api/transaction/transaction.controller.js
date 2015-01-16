@@ -2,7 +2,7 @@
 
 var _ = require('lodash');
 var db = require('../models');
-var Promise = require("sequelize/node_modules/bluebird");
+var BPromise = require("sequelize/node_modules/bluebird");
 var Transaction = db.Transaction;
 var TransactionHelper = require('../transaction/transaction.helper');
 var TeamHelper = require('../team/team.helper');
@@ -50,11 +50,11 @@ exports.trade = function(req, res) {
     transactionDetail.status = 'pending';
     transactionDetail.type = 'trade';
     var items = req.body.TransactionItems || {};
-    Promise.bind({}).then(function() {
+    BPromise.bind({}).then(function() {
         return TransactionHelper.verifyAssetOwners(req.body.TransactionItems);
     }).then(function(errors) {
         if(errors.length > 0){
-            return Promise.reject(errors);
+            return BPromise.reject(errors);
         }
         return TransactionHelper.createTransaction(transactionDetail, items)
     }).then(function(transaction) {

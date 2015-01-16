@@ -9,7 +9,7 @@ var logger = require('../../logger');
 var mailer = require('nodemailer');
 var env = require('../../config/environment');
 var escapeHtml = require('escape-html');
-var Promise = require("sequelize/node_modules/bluebird");
+var BPromise = require("sequelize/node_modules/bluebird");
 
 var NOREPLY_ADDRESS = 'Shado Sports <noreply@shadosports.com>';
 
@@ -51,8 +51,8 @@ var HEADERS_BY_TYPE = {
 // Returns a promise that resolves with info about the e-mail
 var sendEmail = function(mailOptions) {
     var transport = mailer.createTransport(env.emailTransportOptions)
-    var sendMailAsync = Promise.promisify(transport.sendMail, transport);
-    if(!env.reallySendEmails){ return Promise.resolve({}) }
+    var sendMailAsync = BPromise.promisify(transport.sendMail, transport);
+    if(!env.reallySendEmails){ return BPromise.resolve({}) }
     return sendMailAsync(mailOptions);
 };
 
@@ -181,7 +181,7 @@ exports.digestEmail = function(leagueId, daySpan){
     }
     return db.League.find(leagueInfo).then(function(league){
         if(league == null){
-            return Promise.reject(new Error('No league found with ID '+leagueId));
+            return BPromise.reject(new Error('No league found with ID '+leagueId));
         }
         var whereConditions = ['"LeagueId" = ? AND "createdAt" > (now() - interval \'? day\')',league.id, daySpan];
         return Message.findAll({where: whereConditions}).then(function(messages){

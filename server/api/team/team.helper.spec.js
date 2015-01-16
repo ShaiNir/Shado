@@ -3,7 +3,7 @@ var db =  require('../models');
 var TeamHelper = require('../team/team.helper');
 var _ = require('lodash');
 var testUtil = require('../../components/test-util.js');
-var Promise = require("sequelize/node_modules/bluebird");
+var BPromise = require("sequelize/node_modules/bluebird");
 
 db.sequelize.sync();
 
@@ -201,7 +201,7 @@ describe('TeamHelper.verifyStake', function() {
     })
 
     var setUpTeamAndUsers = function(){
-        return Promise.bind({}).then(function(){
+        return BPromise.bind({}).then(function(){
             return db.League.create();
         }).then(function(league) {
             this.league = league;

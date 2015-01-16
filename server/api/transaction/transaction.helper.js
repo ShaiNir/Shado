@@ -1,5 +1,5 @@
 var _ = require('lodash');
-var Promise = require("sequelize/node_modules/bluebird");
+var BPromise = require("sequelize/node_modules/bluebird");
 var db = require('../models');
 var MessageHelper = require ('../message/message.helper.js');
 
@@ -14,7 +14,7 @@ var COUNTERED_MESSAGE = function(teamName){
 // If status is 'pending', creates a system message to the approver team and sends it out as an e-mail
 // Returns a promise that resolves with the created Approval.
 exports.createApproval = function(approvalInfo){
-    return Promise.bind({}).then(function (approval) {
+    return BPromise.bind({}).then(function (approval) {
         return db.TransactionApproval.create(approvalInfo)
     }).then(function (approval) {
         this.approval = approval;
@@ -29,7 +29,7 @@ exports.createApproval = function(approvalInfo){
             }
             return db.Message.create(messageDetail)
         }
-        return Promise.resolve(null)
+        return BPromise.resolve(null)
     }).then(function(message){
         if(message != null) {
             MessageHelper.messageEmail(message.id);
@@ -57,7 +57,7 @@ exports.createAssetOwnerApprovals = function(transactionId){
             return teams;
         });
         var teamIds = _.unique(_.flatten(teamsByItem));
-        return Promise.map(teamIds, function (teamId) {
+        return BPromise.map(teamIds, function (teamId) {
             var approvalInfo = {
                 TeamId: teamId,
                 role: 'participant',
@@ -95,7 +95,7 @@ exports.createCommishApproval = function(transactionId){
         if(commishTeam){
             approvalInfo.TeamId = commishTeam.id;
         } else {
-            return Promise.reject(new Error('League with ID ' + transaction.LeagueId + ' has no commissioner team!'));
+            return BPromise.reject(new Error('League with ID ' + transaction.LeagueId + ' has no commissioner team!'));
         }
 
         var trade_auto_approve = transaction.League.LeagueSettings[0];
@@ -111,12 +111,12 @@ exports.createCommishApproval = function(transactionId){
 // Returns a promise
 exports.createTradeApprovals = function(transaction){
     if(transaction.type == 'trade'){
-        return Promise.all([
+        return BPromise.all([
             exports.createAssetOwnerApprovals(transaction.id),
             exports.createCommishApproval(transaction.id)
         ]);
     } else {
-        return Promise.resolve([]);
+        return BPromise.resolve([]);
     }
 };
 
@@ -144,7 +144,7 @@ exports.counteroffer = function(transSeriesId, authorId, sqlChunk){
 // Creates a transaction with the given transaction details and items
 // Returns a promise
 exports.createTransaction = function(transactionDetail, items){
-    return Promise.bind({}).then(function() {
+    return BPromise.bind({}).then(function() {
         return db.sequelize.transaction();
     }).then(function(sqlChunk){
         // We're calling our SQL transaction 'sqlChunk' because it's completely different from the Shado concept of transaction
@@ -152,12 +152,12 @@ exports.createTransaction = function(transactionDetail, items){
         if(transactionDetail.seriesId != null) {
             return exports.counteroffer(transactionDetail.seriesId, transactionDetail.authorId, this.sqlChunk);
         }
-        return Promise.resolve();
+        return BPromise.resolve();
     }).then(function() {
         return db.Transaction.create(transactionDetail, {transaction: this.sqlChunk});
     }).then(function(transaction) {
         this.transaction = transaction;
-        return Promise.map(items, function (itemDetail) {
+        return BPromise.map(items, function (itemDetail) {
             return db.TransactionItem.create(itemDetail).then(function (item) {
                 return item;
             });
@@ -249,14 +249,14 @@ exports.acceptOrReject = function(transactionId, teamId, isApproved){
     }
     return db.Transaction.find(query).then(function(transaction){
         if(!transaction){
-            return Promise.reject("No transaction found with given ID " + transaction.id)
+            return BPromise.reject("No transaction found with given ID " + transaction.id)
         }
         if(transaction.status != 'pending'){
-            return Promise.reject("Transaction status is '" + transaction.status + "' so it is ineligible to approval.");
+            return BPromise.reject("Transaction status is '" + transaction.status + "' so it is ineligible to approval.");
         }
         var approval = _.find(transaction.TransactionApprovals, function(a){return a.TeamId == teamId});
         if(approval == null){
-            return Promise.reject("Team " + teamId + " does not have a say in the transaction.");
+            return BPromise.reject("Team " + teamId + " does not have a say in the transaction.");
         }
         approval.status = isApproved ? 'approved' : 'rejected';
         return approval.save();

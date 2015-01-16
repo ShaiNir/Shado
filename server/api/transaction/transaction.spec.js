@@ -5,13 +5,13 @@ var request = require('supertest');
 var testUtil = require('../../components/test-util.js');
 var db = require('../models');
 var app =  require('../../app');
-var Promise = require("sequelize/node_modules/bluebird");
+var BPromise = require("sequelize/node_modules/bluebird");
 var _ = require('lodash');
 
 db.sequelize.sync();
 
 var setupLeagueWithUsers = function(){
-    return Promise.bind({}).then(function(){
+    return BPromise.bind({}).then(function(){
         return db.League.create({
             name: 'League',
             id: 1

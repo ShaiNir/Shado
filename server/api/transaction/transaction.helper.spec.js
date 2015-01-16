@@ -3,7 +3,7 @@
 var should = require('should');
 var db =  require('../models');
 var TransactionHelper = require('../transaction/transaction.helper');
-var Promise = require("sequelize/node_modules/bluebird");
+var BPromise = require("sequelize/node_modules/bluebird");
 var _ = require('lodash');
 var testUtil = require('../../components/test-util.js');
 
@@ -11,7 +11,7 @@ db.sequelize.sync();
 
 // Returns a promise with a context containing all the models
 var setUpLeague = function(){
-    return Promise.bind({}).then(function(){
+    return BPromise.bind({}).then(function(){
         return db.League.create();
     }).then(function(league){
         this.league = league;
