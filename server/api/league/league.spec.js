@@ -7,7 +7,7 @@ var db = require('../models');
 var app =  require('../../app');
 var logger = require('../../logger')
 
-var leagueTest = require('../../components/league_test.js');
+var populateTest = require('../../components/populate_league_test.js');
 
 db.sequelize.sync();
 
@@ -189,7 +189,7 @@ describe('POST /api/leagues/:id/populate', function() {
 
     before(function(done) {
         db.User.create(account1).then(function(adminUser) {
-            return leagueTest.fillLeague(adminUser);
+            return populateTest.fillLeague(adminUser);
         }).then(function() {;
         done();
         });
@@ -224,7 +224,7 @@ describe('POST /api/leagues/:id/populate', function() {
 
     it('should only allow adminUser to send and complete the request', function(done) {
         db.User.create(account2).success(function(commishUser) {
-            return leagueTest.fillLeague(commishUser);
+            return populateTest.fillLeague(commishUser);
         }).then(function () {
             should(true).ok
             done();

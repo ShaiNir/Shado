@@ -10,7 +10,7 @@ var Populate = (function() {
     var _fillLeague = function(user) {
         if (user.role !== 'admin') {
             console.log("Error, user is not an admin, user role is: " + user.role);
-            return false;
+            Promise.reject("User is not an admin");
         }
         return db.League.create({
             name: 'Test League',

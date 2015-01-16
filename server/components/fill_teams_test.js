@@ -9,6 +9,7 @@ var Fill = (function() {
     {name: "Albany Alphas"},
     {name: "Alaska Arctics"},
     {name: "Baltimore Spirits"}
+    {name: "Free Agency Team"}
   ]
 
   var stockPlayers = [
@@ -24,15 +25,37 @@ var Fill = (function() {
     realWorldTeam: "BAL"},
     {name: "Dirk von Stryker",
     realWorldTeam: "BAL"}
+    {name: "Scoonie Barrett",
+    realWorldTeam: "HWI"}
+    {name: "Alphonse Norwich IV",
+    realWorldTeam: "HWI"}
   ]
 
   var _fillTeams = function(user) {
     if (user.role !== 'admin') {
       console.log("Error, user is not an admin, user role is: " + user.role);
-      return false;
+      Promise.reject("User is not an admin");
     }
+    return createTeams().then(function () {
+      return assignPlayers();
+    });
+  }
+
+  var createTeams = function() {
     return db.Team.bulkCreate(stockTeams).then(function() {
-      return db.Player.bulkCreate(stockPlayers)})
+      return db.Player.bulkCreate(stockPlayers)
+    });
+  }
+
+  var assignPlayers = function() {
+    var teams = db.Team.findAll();
+    var players = db.Players.findAll();
+
+    _(teams).forEach(function(team) {
+      _(players).forEach(function(team) {
+
+      })
+    })
   }
   return {
     fillTeams : _fillTeams
