@@ -225,8 +225,8 @@ describe('POST /api/leagues/:id/populate', function() {
     it('should only allow adminUser to send and complete the request', function(done) {
         db.User.create(account2).success(function(commishUser) {
             return populateTest.fillLeague(commishUser);
-        }).then(function () {
-            should(true).ok
+        }).error(function (error) {
+            console.log(error);
             done();
         });
     });

@@ -3,6 +3,7 @@
 **/
 var db = require('../api/models');
 var _ = require('lodash');
+var BPromise = require("sequelize/node_modules/bluebird");
 
 var Populate = (function() {
     var teamArray =[]
@@ -10,7 +11,7 @@ var Populate = (function() {
     var _fillLeague = function(user) {
         if (user.role !== 'admin') {
             console.log("Error, user is not an admin, user role is: " + user.role);
-            Promise.reject("User is not an admin");
+            BPromise.reject("User is not an admin");
         }
         return db.League.create({
             name: 'Test League',

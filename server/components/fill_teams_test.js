@@ -3,12 +3,13 @@
 **/
 
 var db = require('../api/models');
+var _ = require('lodash');
 
 var Fill = (function() {
   var stockTeams = [
     {name: "Albany Alphas"},
     {name: "Alaska Arctics"},
-    {name: "Baltimore Spirits"}
+    {name: "Baltimore Spirits"},
     {name: "Free Agency Team"}
   ]
 
@@ -24,9 +25,9 @@ var Fill = (function() {
     {name: "Silvia Windcreek",
     realWorldTeam: "BAL"},
     {name: "Dirk von Stryker",
-    realWorldTeam: "BAL"}
+    realWorldTeam: "BAL"},
     {name: "Scoonie Barrett",
-    realWorldTeam: "HWI"}
+    realWorldTeam: "HWI"},
     {name: "Alphonse Norwich IV",
     realWorldTeam: "HWI"}
   ]
@@ -49,14 +50,13 @@ var Fill = (function() {
 
   var assignPlayers = function() {
     var teams = db.Team.findAll();
-    var players = db.Players.findAll();
+    var players = db.Player.findAll({group: 'realWorldTeam'});
 
-    _(teams).forEach(function(team) {
-      _(players).forEach(function(team) {
-
-      })
-    })
+    // return _.groupBy(players, 'realWorldTeam').then(function (groupPlayers) {
+    //   console.log(groupPlayers);
+    // })
   }
+
   return {
     fillTeams : _fillTeams
   }

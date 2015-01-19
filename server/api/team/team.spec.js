@@ -96,9 +96,9 @@ describe ('POST /api/teams/fill', function() {
     });
   });
 
-  it('should have prepared 3 teams', function(done) {
+  it('should have prepared 4 teams', function(done) {
     db.Team.findAndCountAll().then(function(result) {
-      return result.count.should.equal(3);
+      return result.count.should.equal(4);
     }).then(function() {
       done();
     });
