@@ -15,7 +15,8 @@ module.exports = function (grunt) {
     ngtemplates: 'grunt-angular-templates',
     cdnify: 'grunt-google-cdn',
     protractor: 'grunt-protractor-runner',
-    injector: 'grunt-asset-injector'
+    injector: 'grunt-asset-injector',
+    buildcontrol: 'grunt-build-control'
   });
 
   // Time how long tasks take. Can help when optimizing build times
@@ -331,7 +332,7 @@ module.exports = function (grunt) {
     // Replace Google CDN references
     cdnify: {
       dist: {
-        html: ['<%= yeoman.dist %>/*.html']
+          html: ['<%= yeoman.dist %>/public/*.html']
       }
     },
 
@@ -398,6 +399,29 @@ module.exports = function (grunt) {
         'imagemin',
         'svgmin'
       ]
+    },
+
+
+    buildcontrol: {
+      options: {
+          dir: 'dist',
+          commit: true,
+          push: true,
+          connectCommits: false,
+          message: 'Built %sourceName% from commit %sourceCommit% on branch %sourceBranch%'
+      },
+      heroku: {
+          options: {
+              remote: 'heroku',
+              branch: 'master'
+          }
+      },
+      openshift: {
+          options: {
+              remote: 'openshift',
+              branch: 'master'
+          }
+      }
     },
 
     // Test settings
