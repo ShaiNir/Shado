@@ -7,35 +7,43 @@ var _ = require('lodash');
 
 var Fill = (function() {
   var stockTeams = [
-    {name: "Albany Alphas"},
-    {name: "Alaska Arctics"},
-    {name: "Baltimore Spirits"},
-    {name: "Free Agency Team"}
+    {name: "Albany Alphas", id: 1},
+    {name: "Alaska Arctics", id: 2},
+    {name: "Baltimore Spirits", id: 3},
+    {name: "Free Agency Team", id: 4}
   ]
 
   var stockPlayers = [
     {name: "Rodger Umaechi",
-    realWorldTeam: "ALB"},
+    realWorldTeam: "ALB",
+    id: 1},
     {name: "Apiatan Redmane",
-    realWorldTeam: "ALB"},
+    realWorldTeam: "ALB",
+    id: 2},
     {name: "Carl Esteban",
-    realWorldTeam: "ALK"},
+    realWorldTeam: "ALK",
+    id: 3},
     {name: "Ambrose Slade",
-    realWorldTeam: "ALK"},
+    realWorldTeam: "ALK",
+    id: 4},
     {name: "Silvia Windcreek",
-    realWorldTeam: "BAL"},
+    realWorldTeam: "BAL",
+    id: 5},
     {name: "Dirk von Stryker",
-    realWorldTeam: "BAL"},
+    realWorldTeam: "BAL",
+    id: 6},
     {name: "Scoonie Barrett",
-    realWorldTeam: "HWI"},
+    realWorldTeam: "HWI",
+    id: 7},
     {name: "Alphonse Norwich IV",
-    realWorldTeam: "HWI"}
+    realWorldTeam: "HWI",
+    id: 8}
   ]
 
   var _fillTeams = function(user) {
     if (user.role !== 'admin') {
       console.log("Error, user is not an admin, user role is: " + user.role);
-      Promise.reject("User is not an admin");
+      return Promise.reject("User is not an admin");
     }
     return createTeams().then(function () {
       return assignPlayers();
@@ -50,11 +58,17 @@ var Fill = (function() {
 
   var assignPlayers = function() {
     var teams = db.Team.findAll();
-    var players = db.Player.findAll({group: 'realWorldTeam'});
+    var dbPlayers = db.Player.findAll({group: ['realWorldTeam'] })
+    var lodashPlayers = db.Player.findAll();
 
-    // return _.groupBy(players, 'realWorldTeam').then(function (groupPlayers) {
-    //   console.log(groupPlayers);
-    // })
+    console.log("LODASH PLAYERS");
+    _.groupBy(lodashPlayers, function(lodashPlayer) { console.log(lodashPlayer); });
+    console.log("DB PLAYERS");
+    console.log(dbPlayers);
+
+    // for every player with a different realWorldTeam, you assign them to a
+    // different team.
+
   }
 
   return {
