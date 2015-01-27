@@ -57,18 +57,24 @@ var Fill = (function() {
   }
 
   var assignPlayers = function() {
-    var teams = db.Team.findAll();
-    var dbPlayers = db.Player.findAll({group: ['realWorldTeam'] })
-    var lodashPlayers = db.Player.findAll();
+    var groupedPlayers = []
+    var realWorldTeams = []
 
-    console.log("LODASH PLAYERS");
-    _.groupBy(lodashPlayers, function(lodashPlayer) { console.log(lodashPlayer); });
-    console.log("DB PLAYERS");
-    console.log(dbPlayers);
-
-    // for every player with a different realWorldTeam, you assign them to a
-    // different team.
-
+    db.Team.findAll().then(function(teams) {
+      db.Player.findAll().then(function(players) {
+        realWorldTeams = _.chain(players)
+          .pluck('realWorldTeam')
+          .uniq()
+          .value();
+        _(realWorldTeams).map(function(realTeam) {
+          var realTeamIndex = realWorldTeams.indexOf(realTeam);
+          db.Player.update(
+            { team: teams[realTeamIndex]},
+            { where: {realWorldTeam: realTeam}}
+          )
+        });
+      });
+    })
   }
 
   return {
