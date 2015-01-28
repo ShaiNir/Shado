@@ -13,3 +13,4 @@
 {"level":"error","message":"Error creating e-mail: Cannot read property 'name' of null","timestamp":"2015-01-26T09:51:44.459Z"}
 {"level":"error","message":"Error creating e-mail: Cannot read property 'name' of null","timestamp":"2015-01-26T10:02:36.203Z"}
 {"level":"error","message":"Error creating e-mail: Cannot read property 'name' of null","timestamp":"2015-01-26T12:46:31.631Z"}
+{"level":"error","message":"Error creating e-mail: Cannot read property 'name' of null","timestamp":"2015-01-28T11:00:52.820Z"}

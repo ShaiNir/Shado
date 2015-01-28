@@ -9,7 +9,7 @@ router.get('/', controller.index);
 router.get('/:id', controller.show);
 router.get('/:id/players', controller.players)
 router.post('/', controller.create);
-// router.post('/fill', controller.populate);
+router.post('/fill', controller.fill);
 router.put('/:id', controller.update);
 router.patch('/:id', controller.update);
 router.delete('/:id', controller.destroy);

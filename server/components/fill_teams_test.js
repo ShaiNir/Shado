@@ -10,7 +10,8 @@ var Fill = (function() {
     {name: "Albany Alphas", id: 1},
     {name: "Alaska Arctics", id: 2},
     {name: "Baltimore Spirits", id: 3},
-    {name: "Free Agency Team", id: 4}
+    {name: "Free Agency Team", id: 4, special: 'freeagency'},
+    {name: "Commissioner Team", id: 5, special: 'commish'}
   ]
 
   var stockPlayers = [
@@ -37,7 +38,13 @@ var Fill = (function() {
     id: 7},
     {name: "Alphonse Norwich IV",
     realWorldTeam: "HWI",
-    id: 8}
+    id: 8},
+    {name: "Neil LaRocca",
+    realWorldTeam: "PLY",
+    id: 9},
+    {name: "Nina Lima",
+    realWorldTeam: "PLY",
+    id: 10}
   ]
 
   var _fillTeams = function(user) {
@@ -57,10 +64,11 @@ var Fill = (function() {
   }
 
   var assignPlayers = function() {
-    var groupedPlayers = []
     var realWorldTeams = []
 
-    db.Team.findAll().then(function(teams) {
+    db.Team.findAll({
+      where: [{special: null}]
+    }).then(function(teams) {
       db.Player.findAll().then(function(players) {
         realWorldTeams = _.chain(players)
           .pluck('realWorldTeam')
@@ -68,13 +76,26 @@ var Fill = (function() {
           .value();
         _(realWorldTeams).map(function(realTeam) {
           var realTeamIndex = realWorldTeams.indexOf(realTeam);
-          db.Player.update(
-            { team: teams[realTeamIndex]},
-            { where: {realWorldTeam: realTeam}}
-          )
+          db.Player.findAll({
+           where: { realWorldTeam: realTeam }
+          }).then(function(realTeamPlayers) {
+            _(realTeamPlayers).map(function(realTeamPlayer) {
+              if (realTeamIndex >= teams.length) {
+                db.Team.find({
+                  where: {special: "freeagency"}
+                }).then(function(freeAgentTeam) {
+                  freeAgentTeam.addPlayer(realTeamPlayer);
+                  freeAgentTeam.save();
+                });
+              } else {
+                teams[realTeamIndex].addPlayer(realTeamPlayer);
+                teams[realTeamIndex].save();
+              }
+            });
+          });
         });
       });
-    })
+    });
   }
 
   return {

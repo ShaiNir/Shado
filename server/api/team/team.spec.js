@@ -70,9 +70,15 @@ describe('GET /api/teams/:id/players', function() {
 
 describe ('POST /api/teams/fill', function() {
   var account1 = {
-        email: 'test1@test.com',
-        password: 'test',
-        role: 'admin'
+    email: 'test1@test.com',
+    password: 'test',
+    role: 'admin'
+  };
+
+  var account2 = {
+    email: 'test2@test.com',
+    password: 'testing',
+    role: 'commish'
   };
 
   before(function(done) {
@@ -96,10 +102,42 @@ describe ('POST /api/teams/fill', function() {
     });
   });
 
-  it('should have prepared 4 teams', function(done) {
+  it('should have prepared 5 teams', function(done) {
     db.Team.findAndCountAll().then(function(result) {
+      return result.count.should.equal(5);
+    }).then(function() {
+      done();
+    });
+  });
+
+  it('should have prepared a free agency team', function(done) {
+    db.Team.find({where: {special: "freeagency"}
+    }).then(function () {
+      done();
+    })
+  })
+
+  it('should have attached players to teams', function(done) {
+    db.PlayerAssignment.find( {where: {"TeamId" : 1} }).then(function(result) {
+      return result.PlayerId.should.equal(1);
+    }).then(function() {
+      done();
+    });
+  });
+
+  it('should have added 4 players to free agency', function(done) {
+    db.PlayerAssignment.findAndCountAll( {where: {"TeamId" : 4}}).then(function(result) {
       return result.count.should.equal(4);
     }).then(function() {
+      done();
+    });
+  });
+
+  it('should only allow adminUser to send and complete the request', function(done) {
+    db.User.create(account2).then(function(commishUser) {
+      return fillTest.fillTeams(commishUser);
+    }).error(function (error) {
+      console.log(error);
       done();
     });
   });

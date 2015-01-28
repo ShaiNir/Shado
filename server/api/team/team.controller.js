@@ -2,6 +2,7 @@
 
 var _ = require('lodash');
 var Team = require('../models').Team;
+var Player = require('../models').Player;
 
 // Get list of teams
 exports.index = function(req, res) {
@@ -73,15 +74,62 @@ exports.players = function(req, res) {
     });
 };
 
-exports.players = function(req, res) {
-    Team.findAll().then(function (teams) {
-        return res.json(200, teams);
-    }, function(error){
+exports.fill = function(req, res) {
+    var user = req.user;
+      if (user.role !== admin) {
+        logger.log("error", "Filling teams is restricted to admins only");
+        return res.send (403);
+      }
+    Team.findAll({
+        where: [{special: null}]
+    }).then(function(teams) {
+        Player.findAll().then(function(players) {
+            return fillTeams(teams, players)
+        })
+    }).then(function() {
+        return res.send(204, teams)
+    }).catch (function(error) {
         return handleError(res, error);
-    });
+    })
+
 };
+
 
 
 function handleError(res, error) {
     return res.send(500, error);
+}
+
+/**
+* Created by Sammy on 1/13/15
+**/
+
+function fillTeams(teams, players) {
+    var realWorldTeams = []
+
+    realWorldTeams = _.chain(players)
+        .pluck('realWorldTeam')
+        .uniq()
+        .value();
+    _(realWorldTeams).map(function(realTeam) {
+        var realTeamIndex = realWorldTeams.indexOf(realTeam);
+        db.Player.findAll({
+            where: { realWorldTeam: realTeam }
+        }).then(function(realTeamPlayers) {
+            _(realTeamPlayers).map(function(realTeamPlayer) {
+                if (realTeamIndex >= teams.length) {
+                    db.Team.find({
+                        where: {special: "freeagency"}
+                    }).then(function(freeAgentTeam) {
+                        freeAgentTeam.addPlayer(realTeamPlayer);
+                        freeAgentTeam.save();
+                    });
+                } else {
+                    teams[realTeamIndex].addPlayer(realTeamPlayer);
+                    teams[realTeamIndex].save();
+                }
+            });
+        });
+    });
+
 }
