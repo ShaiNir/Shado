@@ -9,7 +9,7 @@ db.sequelize.sync();
 describe('getEventIds', function() {
     beforeEach(function(done) {
         // Clear db before testing
-        db.LeagueEvent.destroy({},{truncate: true}).then(function() {
+        db.LeagueEvent.destroy({truncate: true}).then(function() {
             done();
         });
     });

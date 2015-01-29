@@ -4,6 +4,7 @@ var should = require('should');
 var app = require('../../app');
 var request = require('supertest');
 var db = require('../models');
+var testUtil = require('../../components/test-util.js');
 
 describe('GET /api/teams', function() {
 
@@ -23,14 +24,13 @@ describe('GET /api/teams', function() {
 describe('GET /api/teams/:id/players', function() {
 
   before(function(done) {
-    // Clear db before testing
-    db.Team.destroy({},{truncate: true}).success(function() {
-      db.Player.destroy({}, {truncate: true}).success(function() {
-        db.PlayerAssignment.destroy({}, {truncate: true}).success(function() {
-        done();
-        });
-      });
-    });
+      // Clear db before testing
+      var typesToClear = [
+          db.Team,
+          db.Player,
+          db.PlayerAssignment
+      ];
+      testUtil.clearSequelizeTables(typesToClear,done);
   });
 
   before(function(done) {

@@ -36,8 +36,8 @@ describe('GET /api/sports', function() {
 describe('POST /api/:id/sports/populate', function() {
 
   beforeEach(function(done) {
-    db.Sport.destroy({}, {truncate: true}).then(function() {
-      db.Player.destroy({}, {truncate: true}).then(function() {
+    db.Sport.destroy({where: 'true'}).then(function() {
+      db.Player.destroy({where: 'true'}).then(function() {
         db.Sport.create({ name:'Test MLB', id:1 }).then(function(sport) {
         done();
         });

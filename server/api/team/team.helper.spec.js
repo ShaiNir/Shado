@@ -41,15 +41,13 @@ var setUpLeague= function(done){
 describe('Validate Roster For Team', function() {
     beforeEach(function(done) {
         // Clear db before testing
-        db.Team.destroy({},{truncate: true}).then(function() {
-            db.Player.destroy({},{truncate: true}).then(function() {
-                db.LeagueSetting.destroy({},{truncate: true}).then(function() {
-                    db.League.destroy({},{truncate: true}).then(function() {
-                        done();
-                    });
-                });
-            });
-        });
+        var typesToClear = [
+            db.Player,
+            db.LeagueSetting,
+            db.League,
+            db.Team
+        ];
+        testUtil.clearSequelizeTables(typesToClear,done);
     });
 
     it('should return an empty array if there are no limits', function(done){
@@ -150,15 +148,13 @@ describe('Validate Roster For Team', function() {
 describe('getAutoPurgedPlayers', function() {
     beforeEach(function(done) {
         // Clear db before testing
-        db.Team.destroy({},{truncate: true}).then(function() {
-            db.Player.destroy({},{truncate: true}).then(function() {
-                db.LeagueSetting.destroy({},{truncate: true}).then(function() {
-                    db.League.destroy({},{truncate: true}).then(function() {
-                        done();
-                    });
-                });
-            });
-        });
+        var typesToClear = [
+            db.Player,
+            db.LeagueSetting,
+            db.League,
+            db.Team
+        ];
+        testUtil.clearSequelizeTables(typesToClear,done);
     });
 
     it('should return the highest-paid player if the team is over its limit', function(done){

@@ -34,13 +34,13 @@ describe('GET /api/leagues/:id/teams', function() {
 
     before(function(done) {
         // Clear db before testing
-        db.User.destroy({},{truncate: true}).success(function() {
-            db.League.destroy({},{truncate: true}).success(function() {
-                db.Team.destroy({},{truncate: true}).success(function() {
-                    done();
-                });
-            });
-        });
+        var typesToClear = [
+            db.User,
+            db.League,
+            db.Team,
+            db.Stake
+        ];
+        testUtil.clearSequelizeTables(typesToClear,done);
     });
 
     before(function(done){
@@ -94,24 +94,26 @@ describe('GET /api/leagues/:id/rival_teams', function() {
 
     before(function(done) {
         // Clear db before testing
-        db.User.destroy({},{truncate: true}).success(function() {
-            db.League.destroy({},{truncate: true}).success(function() {
-                db.Team.destroy({},{truncate: true}).success(function() {
-                    done();
-                });
-            });
-        });
+        var typesToClear = [
+            db.User,
+            db.League,
+            db.Team,
+            db.Stake
+        ];
+        testUtil.clearSequelizeTables(typesToClear,done);
     });
 
     before(function(done){
 
         var account1 = {
             email: 'test1@test.com',
-            password: 'test'
+            password: 'test',
+            name: 'Bob One'
         };
         var account2 = {
             email: 'test2@test.com',
-            password: 'test'
+            password: 'test',
+            name: 'Bob Two'
         };
 
         db.User.create(account1);
@@ -129,7 +131,7 @@ describe('GET /api/leagues/:id/rival_teams', function() {
                     return team1.save();
                 });
             });
-        }).then(function(){
+        }).then(function(team1){
             testUtil.loginUser(request(app),account2,function(token){
                 loginToken = token;
                 done();
@@ -176,13 +178,13 @@ describe('GET /api/leagues/:id/populate', function() {
     };
     before(function(done) {
         // Clear db before testing
-        db.User.destroy({}, {truncate: true}).then(function() {
-            return db.League.destroy({},{truncate: true})
-        }).then(function() {
-            return db.Team.destroy({},{truncate: true})
-        }).then(function(){
-            done();
-        });
+        var typesToClear = [
+            db.User,
+            db.League,
+            db.Team,
+            db.Stake
+        ];
+        testUtil.clearSequelizeTables(typesToClear,done);
     });
 
     before(function(done) {

@@ -15,13 +15,13 @@ var userData = {
 describe('User Model', function() {
   before(function(done) {
     // Clear users before testing
-    User.destroy({},{truncate: true}).then(function() {
+    User.destroy({where: 'true'}).then(function() {
       done();
     });
   });
 
   afterEach(function(done) {
-    User.destroy({},{truncate: true}).then(function() {
+    User.destroy({where: 'true'}).then(function() {
       done();
     });
   });
