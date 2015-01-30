@@ -15,7 +15,7 @@ var validateUserMemberOfSender = function(req, res, teams){
     var authorized = _.any(sender.Users, function (user) {
         return user.id == req.user.id
     });
-    if (!authorized){ return res.send(403) };
+    if (!authorized){ return res.send(403) }
     return null;
 }
 
@@ -29,7 +29,7 @@ var validateRecipientAndSender = function(req, res, teams){
     if(!recipient){
         return res.json(404, 'No team found to receive message with ID '+req.body.senderId);
     }
-    if(!(sender.LeagueId == recipient.LeagueId)){
+    if(sender.LeagueId != recipient.LeagueId){
         return res.json(500, 'Sending team '+sender.id+' and receiving team '+recipient.id + ' are not in the same league.');
     }
     return null;

@@ -123,7 +123,7 @@ exports.verifyStake = function(userId, teamId){
     return BPromise.bind({}).then(function() {
         return db.Team.findOne(teamQuery)
     }).then(function(team) {
-        if(!team){ return BPromise.reject("No team found with given ID " + teamIds)}
+        if(!team){ return BPromise.reject("No team found with given ID " + teamId)}
         return _.any(team.Users, function(user){
             return user.id == userId
         })

@@ -30,7 +30,7 @@ exports.log = function(options){
  */
 exports.leagueDigest = function(options){
     // Ensure daySpan is an integer
-    if(options.daySpan == null || !(typeof options.daySpan === 'number') || !(options.daySpan % 1 === 0)){
+    if(options.daySpan == null || (typeof options.daySpan !== 'number') || (options.daySpan % 1 !== 0)){
         return BPromise.reject(new Error('daySpan is not an integer'));
     }
     return helpers.Message.digestEmail(options.LeagueId, options.daySpan);

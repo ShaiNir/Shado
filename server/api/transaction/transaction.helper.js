@@ -19,7 +19,7 @@ exports.createApproval = function(approvalInfo){
     }).then(function (approval) {
         this.approval = approval;
         if(this.approval.status == 'pending'){
-            messageDetail = {
+            var messageDetail = {
                 _parameters: JSON.stringify({
                     subject: 'You have a trade offer pending approval',
                     text: 'Log in to shadosports.com to see the offer details.'
