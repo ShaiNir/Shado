@@ -83,7 +83,9 @@ describe ('POST /api/teams/fill', function() {
 
   before(function(done) {
     // Clear db before testing
-    db.User.destroy({}, {truncate: true}).then(function() {
+    db.Sport.destroy({}, {truncate: true}).then(function() {
+      return db.User.destroy({}, {truncate: true})
+    }).then(function() {
       return db.Team.destroy({}, {truncate: true})
     }).then(function() {
       return db.Player.destroy({}, {truncate: true})

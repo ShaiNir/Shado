@@ -75,23 +75,27 @@ exports.players = function(req, res) {
 };
 
 exports.fill = function(req, res) {
+    var currentSport = ""
     var user = req.user;
       if (user.role !== admin) {
         logger.log("error", "Filling teams is restricted to admins only");
         return res.send (403);
       }
-    Team.findAll({
-        where: [{special: null}]
-    }).then(function(teams) {
-        Player.findAll().then(function(players) {
-            return fillTeams(teams, players)
-        })
+    Sport.find(req.params.id).then(function(sport) {
+        currentSport = sport
     }).then(function() {
-        return res.send(204, teams)
-    }).catch (function(error) {
-        return handleError(res, error);
-    })
-
+        Team.findAll({
+            where: [{special: null, sportId: currentSport.id}]
+        }).then(function(teams) {
+            Player.findAll().then(function(players) {
+                return fillTeams(teams, players)
+            })
+        }).then(function() {
+            return res.send(204, teams)
+        }).catch (function(error) {
+            return handleError(res, error);
+        })
+    });
 };
 
 
