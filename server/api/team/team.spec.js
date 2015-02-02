@@ -92,7 +92,7 @@ describe ('POST /api/teams/fill', function() {
     }).then(function() {
       return db.PlayerAssignment.destroy({}, {truncate: true})
     }).then(function() {
-      done();
+      return done();
     });
   });
 
@@ -100,7 +100,7 @@ describe ('POST /api/teams/fill', function() {
     db.User.create(account1).then(function(adminUser) {
       return fillTest.fillTeams(adminUser);
     }).then(function() {
-     done();
+     return done();
     });
   });
 

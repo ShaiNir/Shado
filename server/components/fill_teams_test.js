@@ -63,9 +63,9 @@ var Fill = (function() {
       id: 1}
   ]
 
-  var currentSport = ""
-  var selectedTeams = ""
-  var selectedPlayers = ""
+  var selectedSport = ""
+  var selectedTeams = []
+  var selectedPlayers = []
   var realWorldTeams = []
 
   // var _fillTeams = function(user) {
@@ -95,13 +95,13 @@ var Fill = (function() {
       return setCurrentSport(sport);
     }).then(function() {
       return db.Team.findAll({
-        where: [{special: null, SportId: currentSport.id}]
+        where: [{special: null, SportId: selectedSport.id}]
       });
     }).then(function(teams) {
       return setSelectedTeams(teams);
     }).then(function() {
       return db.Player.findAll({
-        where: {SportId: currentSport.id}
+        where: { SportId: selectedSport.id }
       });
     }).then(function(players) {
       return setSelectedPlayers(players);
@@ -130,13 +130,13 @@ var Fill = (function() {
   //     return setCurrentSport(sport);
   //   }).then(function() {
   //     return db.Team.findAll({
-  //       where: [{special: null, SportId: currentSport.id}]
+  //       where: [{special: null, SportId: selectedSport.id}]
   //     });
   //   }).then(function(teams) {
   //     return setSelectedTeams(teams);
   //   }).then(function() {
   //     return db.Player.findAll({
-  //       where: {SportId: currentSport.id}
+  //       where: {SportId: selectedSport.id}
   //     });
   //   }).then(function(players) {
   //     return setSelectedPlayers(players);
@@ -144,7 +144,7 @@ var Fill = (function() {
   // }
 
   var setCurrentSport = function(sport) {
-    currentSport = sport;
+    selectedSport = sport;
   }
 
   var setSelectedTeams = function(teams) {
@@ -154,7 +154,6 @@ var Fill = (function() {
   var setSelectedPlayers = function(players) {
     selectedPlayers = players;
   }
-
 
   var assignPlayers = function(teams, players) {
     getRealWorldTeams(players);

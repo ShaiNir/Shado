@@ -75,30 +75,38 @@ exports.players = function(req, res) {
 };
 
 exports.fill = function(req, res) {
-    var currentSport = ""
+    var selectedSport = ""
+    var selectedTeams = []
+    var selectedPlayers = []
+    var realWorldTeams = []
+
     var user = req.user;
       if (user.role !== admin) {
         logger.log("error", "Filling teams is restricted to admins only");
         return res.send (403);
       }
     Sport.find(req.params.id).then(function(sport) {
-        currentSport = sport
+        return setSelectedSport(sport);
     }).then(function() {
-        Team.findAll({
-            where: [{special: null, sportId: currentSport.id}]
-        }).then(function(teams) {
-            Player.findAll().then(function(players) {
-                return fillTeams(teams, players)
-            })
-        }).then(function() {
-            return res.send(204, teams)
-        }).catch (function(error) {
-            return handleError(res, error);
+        return Team.findAll({
+            where: [{ special: null, SportId: selectedSport.id }]
+        });
+    }).then(function(teams) {
+        return setSelectedTeams();
+    }).then(function() {
+        return Player.findAll({
+            where: { SportId: selectedSport.id }
         })
+    }).then(function(players) {
+        return setSelectedPlayers(players);
+    }).then(function() {
+        return assignPlayers(setSelectedTeams, setSelectedPlayers);
+    }).then(function() {
+        return res.send(204);
+    }).catch (function(error) {
+        return handleError(res, error);
     });
 };
-
-
 
 function handleError(res, error) {
     return res.send(500, error);
@@ -108,32 +116,46 @@ function handleError(res, error) {
 * Created by Sammy on 1/13/15
 **/
 
-function fillTeams(teams, players) {
-    var realWorldTeams = []
+function setSelectedSport(sport) {
+    selectedSport = sport;
+  }
 
-    realWorldTeams = _.chain(players)
-        .pluck('realWorldTeam')
-        .uniq()
-        .value();
+function setSelectedTeams(teams) {
+    selectedTeams = teams;
+  }
+
+function setSelectedPlayers(players) {
+    selectedPlayers = players;
+  }
+
+
+function assignPlayers(teams, players) {
+    getRealWorldTeams(players);
     _(realWorldTeams).map(function(realTeam) {
-        var realTeamIndex = realWorldTeams.indexOf(realTeam);
-        db.Player.findAll({
-            where: { realWorldTeam: realTeam }
-        }).then(function(realTeamPlayers) {
-            _(realTeamPlayers).map(function(realTeamPlayer) {
-                if (realTeamIndex >= teams.length) {
-                    db.Team.find({
-                        where: {special: "freeagency"}
-                    }).then(function(freeAgentTeam) {
-                        freeAgentTeam.addPlayer(realTeamPlayer);
-                        freeAgentTeam.save();
-                    });
-                } else {
-                    teams[realTeamIndex].addPlayer(realTeamPlayer);
-                    teams[realTeamIndex].save();
-                }
+      var realTeamIndex = realWorldTeams.indexOf(realTeam);
+      db.Player.findAll({
+       where: { realWorldTeam: realTeam }
+      }).then(function(realTeamPlayers) {
+        _(realTeamPlayers).map(function(realTeamPlayer) {
+          if (realTeamIndex >= teams.length) {
+            db.Team.find({
+              where: {special: "freeagency"}
+            }).then(function(freeAgentTeam) {
+              freeAgentTeam.addPlayer(realTeamPlayer);
+              freeAgentTeam.save();
             });
+          } else {
+            teams[realTeamIndex].addPlayer(realTeamPlayer);
+            teams[realTeamIndex].save();
+          }
         });
+      });
     });
+  }
 
-}
+function getRealWorldTeams(players) {
+    realWorldTeams = _.chain(players)
+      .pluck('realWorldTeam')
+      .uniq()
+      .value();
+  }
