@@ -122,7 +122,7 @@ exports.settings = function(req, res) {
 
 exports.populate = function(req, res) {
   var user = req.user;
-  if (user.role !== admin) {
+  if (user.role !== 'admin') {
     logger.log("error", "Populating league is restricted to admins only");
     return res.send (403);
   }

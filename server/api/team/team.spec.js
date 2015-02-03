@@ -30,6 +30,8 @@ describe('GET /api/teams/:id/players', function() {
   before(function(done) {
       // Clear db before testing
       var typesToClear = [
+          db.Sport,
+          db.League,
           db.Team,
           db.Player,
           db.PlayerAssignment
@@ -83,31 +85,28 @@ describe ('POST /api/teams/fill', function() {
 
   before(function(done) {
     // Clear db before testing
-    db.Sport.destroy({}, {truncate: true}).then(function() {
-      return db.User.destroy({}, {truncate: true})
-    }).then(function() {
-      return db.Team.destroy({}, {truncate: true})
-    }).then(function() {
-      return db.Player.destroy({}, {truncate: true})
-    }).then(function() {
-      return db.PlayerAssignment.destroy({}, {truncate: true})
-    }).then(function() {
-      return done();
-    });
+    var typesToClear = [
+          db.Sport,
+          db.User,
+          db.League,
+          db.Team,
+          db.Player,
+          db.PlayerAssignment
+      ];
+      testUtil.clearSequelizeTables(typesToClear,done);
   });
 
   before(function(done) {
     db.User.create(account1).then(function(adminUser) {
       return fillTest.fillTeams(adminUser);
     }).then(function() {
-     return done();
+      done();
     });
   });
 
   it('should have prepared 5 teams', function(done) {
     db.Team.findAndCountAll().then(function(result) {
       return result.count.should.equal(5);
-    }).then(function() {
       done();
     });
   });
@@ -122,15 +121,13 @@ describe ('POST /api/teams/fill', function() {
   it('should have attached players to teams', function(done) {
     db.PlayerAssignment.find( {where: {"TeamId" : 1} }).then(function(result) {
       return result.PlayerId.should.equal(1);
-    }).then(function() {
       done();
     });
   });
 
   it('should have added 4 players to free agency', function(done) {
-    db.PlayerAssignment.findAndCountAll( {where: {"TeamId" : 4}}).then(function(result) {
+    db.PlayerAssignment.findAndCountAll( {where: {"TeamId" : 4} }).then(function(result) {
       return result.count.should.equal(4);
-    }).then(function() {
       done();
     });
   });

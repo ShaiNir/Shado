@@ -78,18 +78,17 @@ exports.fill = function(req, res) {
     var selectedSport = ""
     var selectedTeams = []
     var selectedPlayers = []
-    var realWorldTeams = []
 
     var user = req.user;
-      if (user.role !== admin) {
+    if (user.role !== 'admin') {
         logger.log("error", "Filling teams is restricted to admins only");
         return res.send (403);
-      }
-    Sport.find(req.params.id).then(function(sport) {
+    }
+    Sport.find(req.params.sport_id).then(function(sport) {
         return setSelectedSport(sport);
     }).then(function() {
         return Team.findAll({
-            where: [{ special: null, SportId: selectedSport.id }]
+            where: [{ special: null, SportId: selectedSport.id, LeagueId: req.params.league_id }]
         });
     }).then(function(teams) {
         return setSelectedTeams();
@@ -130,26 +129,28 @@ function setSelectedPlayers(players) {
 
 
 function assignPlayers(teams, players) {
+    var realWorldTeams = []
+
     getRealWorldTeams(players);
-    _(realWorldTeams).map(function(realTeam) {
-      var realTeamIndex = realWorldTeams.indexOf(realTeam);
-      db.Player.findAll({
-       where: { realWorldTeam: realTeam }
-      }).then(function(realTeamPlayers) {
-        _(realTeamPlayers).map(function(realTeamPlayer) {
-          if (realTeamIndex >= teams.length) {
-            db.Team.find({
-              where: {special: "freeagency"}
-            }).then(function(freeAgentTeam) {
-              freeAgentTeam.addPlayer(realTeamPlayer);
-              freeAgentTeam.save();
+    BPromise.map(realWorldTeams, function(realTeam) {
+        var realTeamIndex = realWorldTeams.indexOf(realTeam);
+        return db.Player.findAll({
+            where: { realWorldTeam: realTeam }
+        }).then(function(realTeamPlayers) {
+            return BPromise.map(realTeamPlayers, function(realTeamPlayer) {
+                if (realTeamIndex >= teams.length) {
+                    db.Team.find({
+                    where: {special: "freeagency"}
+                }).then(function(freeAgentTeam) {
+                    freeAgentTeam.addPlayer(realTeamPlayer);
+                    freeAgentTeam.save();
+                });
+                } else {
+                    teams[realTeamIndex].addPlayer(realTeamPlayer);
+                    teams[realTeamIndex].save();
+                }
             });
-          } else {
-            teams[realTeamIndex].addPlayer(realTeamPlayer);
-            teams[realTeamIndex].save();
-          }
         });
-      });
     });
   }
 
@@ -158,4 +159,4 @@ function getRealWorldTeams(players) {
       .pluck('realWorldTeam')
       .uniq()
       .value();
-  }
+    }

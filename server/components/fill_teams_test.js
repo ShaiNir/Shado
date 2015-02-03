@@ -8,11 +8,11 @@ var BPromise = require("sequelize/node_modules/bluebird");
 
 var Fill = (function() {
   var stockTeams = [
-    {name: "Albany Alphas", id: 1, SportId: 1},
-    {name: "Alaska Arctics", id: 2, SportId: 1},
-    {name: "Baltimore Spirits", id: 3, SportId: 1},
-    {name: "Free Agency Team", id: 4, SportId: 1, special: 'freeagency'},
-    {name: "Commissioner Team", id: 5, SportId: 1, special: 'commish'}
+    {name: "Albany Alphas", id: 1, SportId: 1, LeagueId: 1},
+    {name: "Alaska Arctics", id: 2, SportId: 1, LeagueId: 1},
+    {name: "Baltimore Spirits", id: 3, SportId: 1, LeagueId: 1},
+    {name: "Free Agency Team", id: 4, SportId: 1, LeagueId: 1, special: 'freeagency'},
+    {name: "Commissioner Team", id: 5, SportId: 1, LeagueId: 1, special: 'commish'}
   ]
 
   var stockPlayers = [
@@ -63,39 +63,35 @@ var Fill = (function() {
       id: 1}
   ]
 
-  var selectedSport = ""
+  var stockLeague = [
+    {name: "Stocky",
+    id: 1}
+  ]
+
   var selectedTeams = []
   var selectedPlayers = []
   var realWorldTeams = []
-
-  // var _fillTeams = function(user) {
-  //   new BPromise(function(resolve, reject) {
-  //     return userRoleCheck(user);
-  //   }).then(function() {
-  //     return setUpDatabase();
-  //   }).then(function() {
-  //     return findTeams();
-  //   }).then(function() {
-  //     return assignPlayers(selectedTeams, selectedPlayers)
-  //   });
-  // }
+  var TEST_SPORT_ID = 1
+  var TEST_LEAGUE_ID = 1
 
   var _fillTeams = function(user) {
+    var selectedSport = ""
     if (user.role !== 'admin') {
       console.log("Error, user is not an admin, user role is: " + user.role);
       return Promise.reject("User is not an admin");
     }
     db.Sport.bulkCreate(stockSport).then(function() {
+      return db.League.bulkCreate(stockLeague);
+    }).then(function() {
       return db.Team.bulkCreate(stockTeams);
     }).then(function() {
       return db.Player.bulkCreate(stockPlayers);
     }).then(function() {
-      return db.Sport.find(1)
+      return db.Sport.find(TEST_SPORT_ID);
     }).then(function(sport) {
-      return setCurrentSport(sport);
-    }).then(function() {
+      selectedSport = sport;
       return db.Team.findAll({
-        where: [{special: null, SportId: selectedSport.id}]
+        where: [{ special: null, SportId: selectedSport.id, LeagueId: TEST_LEAGUE_ID }]
       });
     }).then(function(teams) {
       return setSelectedTeams(teams);
@@ -110,43 +106,6 @@ var Fill = (function() {
     });
   }
 
-  // var userRoleCheck = function(user) {
-  //   if (user.role !== 'admin') {
-  //     console.log("Error, user is not an admin, user role is: " + user.role);
-  //     return Promise.reject("User is not an admin");
-  //   }
-  // }
-
-  // var setUpDatabase = function() {
-  //   db.Sport.bulkCreate(stockSport).then(function() {
-  //     return db.Team.bulkCreate(stockTeams);
-  //   }).then(function() {
-  //     return db.Player.bulkCreate(stockPlayers);
-  //   });
-  // }
-
-  // var findTeams = function() {
-  //   db.Sport.find(1).then(function(sport) {
-  //     return setCurrentSport(sport);
-  //   }).then(function() {
-  //     return db.Team.findAll({
-  //       where: [{special: null, SportId: selectedSport.id}]
-  //     });
-  //   }).then(function(teams) {
-  //     return setSelectedTeams(teams);
-  //   }).then(function() {
-  //     return db.Player.findAll({
-  //       where: {SportId: selectedSport.id}
-  //     });
-  //   }).then(function(players) {
-  //     return setSelectedPlayers(players);
-  //   });
-  // }
-
-  var setCurrentSport = function(sport) {
-    selectedSport = sport;
-  }
-
   var setSelectedTeams = function(teams) {
     selectedTeams = teams;
   }
@@ -157,12 +116,12 @@ var Fill = (function() {
 
   var assignPlayers = function(teams, players) {
     getRealWorldTeams(players);
-    _(realWorldTeams).map(function(realTeam) {
+    BPromise.map(realWorldTeams, function(realTeam) {
       var realTeamIndex = realWorldTeams.indexOf(realTeam);
-      db.Player.findAll({
+      return db.Player.findAll({
        where: { realWorldTeam: realTeam }
       }).then(function(realTeamPlayers) {
-        _(realTeamPlayers).map(function(realTeamPlayer) {
+        return BPromise.map(realTeamPlayers, function(realTeamPlayer) {
           if (realTeamIndex >= teams.length) {
             db.Team.find({
               where: {special: "freeagency"}
