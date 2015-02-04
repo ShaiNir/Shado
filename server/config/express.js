@@ -16,6 +16,7 @@ var path = require('path');
 var config = require('./environment');
 var passport = require('passport');
 var session = require('express-session');
+var _ = require('lodash');
 
 module.exports = function(app) {
   var env = app.get('env');
@@ -30,7 +31,8 @@ module.exports = function(app) {
   app.use(passport.initialize());
 
   var sessionStore;
-  if (process.env.HEROKU_POSTGRESQL_BRONZE_URL){
+
+  if (process.env.DATABASE_URL){
       sessionStore = new (require('connect-pg-simple')(session))();
   } else {
       sessionStore = new (require('connect-pg-simple')(session))({
