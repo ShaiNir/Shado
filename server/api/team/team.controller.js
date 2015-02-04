@@ -132,7 +132,7 @@ function assignPlayers(teams, players) {
     var realWorldTeams = []
 
     getRealWorldTeams(players);
-    BPromise.map(realWorldTeams, function(realTeam) {
+    return BPromise.map(realWorldTeams, function(realTeam) {
         var realTeamIndex = realWorldTeams.indexOf(realTeam);
         return db.Player.findAll({
             where: { realWorldTeam: realTeam }
@@ -143,11 +143,11 @@ function assignPlayers(teams, players) {
                     where: {special: "freeagency"}
                 }).then(function(freeAgentTeam) {
                     freeAgentTeam.addPlayer(realTeamPlayer);
-                    freeAgentTeam.save();
+                    return freeAgentTeam.save();
                 });
                 } else {
                     teams[realTeamIndex].addPlayer(realTeamPlayer);
-                    teams[realTeamIndex].save();
+                    return teams[realTeamIndex].save();
                 }
             });
         });
