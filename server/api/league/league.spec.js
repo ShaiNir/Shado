@@ -8,6 +8,7 @@ var app =  require('../../app');
 var logger = require('../../logger')
 
 var populateTest = require('../../components/populate_league_test.js');
+var fillTest = require('../../components/fill_teams_test.js');
 
 db.sequelize.sync();
 
@@ -230,4 +231,76 @@ describe('POST /api/leagues/:id/populate', function() {
             done();
         });
     });
+});
+
+describe ('POST /api/leagues/:id/sports/:id/fill', function() {
+  var account1 = {
+    email: 'test1@test.com',
+    password: 'test',
+    role: 'admin'
+  };
+
+  var account2 = {
+    email: 'test2@test.com',
+    password: 'testing',
+    role: 'commish'
+  };
+
+  before(function(done) {
+    // Clear db before testing
+    var typesToClear = [
+          db.Sport,
+          db.User,
+          db.League,
+          db.Team,
+          db.Player,
+          db.PlayerAssignment
+      ];
+      testUtil.clearSequelizeTables(typesToClear,done);
+  });
+
+  before(function(done) {
+    db.User.create(account1).then(function(adminUser) {
+      return fillTest.fillTeams(adminUser);
+    }).then(function() {
+      done();
+    });
+  });
+
+  it('should have prepared 7 teams', function(done) {
+    db.Team.findAndCountAll().then(function(result) {
+      result.count.should.equal(7);
+      done();
+    });
+  });
+
+  it('should have prepared a free agency team', function(done) {
+    db.Team.find({where: {special: "freeagency"} }).then(function () {
+      done();
+    })
+  })
+
+  it('should have attached players to teams', function(done) {
+    db.PlayerAssignment.find( {where: {"TeamId" : 1} }).then(function(result) {
+      result.PlayerId.should.equal(1);
+      done();
+    });
+  });
+
+  it('should have added 4 players to free agency', function(done) {
+    db.PlayerAssignment.findAndCountAll( {where: {"TeamId" : 6} }).then(function(result) {
+      result.count.should.equal(4);
+      done();
+    });
+  });
+
+  it('should only allow adminUser to send and complete the request', function(done) {
+    db.User.create(account2).then(function(commishUser) {
+      return fillTest.fillTeams(commishUser);
+    }).error(function (error) {
+      console.log(error);
+      done();
+    });
+  });
+
 });

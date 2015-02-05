@@ -11,8 +11,10 @@ var Fill = (function() {
     {name: "Albany Alphas", id: 1, SportId: 1, LeagueId: 1},
     {name: "Alaska Arctics", id: 2, SportId: 1, LeagueId: 1},
     {name: "Baltimore Spirits", id: 3, SportId: 1, LeagueId: 1},
-    {name: "Free Agency Team", id: 4, SportId: 1, LeagueId: 1, special: 'freeagency'},
-    {name: "Commissioner Team", id: 5, SportId: 1, LeagueId: 1, special: 'commish'}
+    {name: "Las Vegas Wildcards", id: 4, SportId: 2, LeagueId: 1},
+    {name: "Des Moines Blanks", id: 5, SportId: 1, LeagueId: 2},
+    {name: "Free Agency Team", id: 6, SportId: 1, LeagueId: 1, special: 'freeagency'},
+    {name: "Commissioner Team", id: 7, SportId: 1, LeagueId: 1, special: 'commish'}
   ]
 
   var stockPlayers = [
@@ -60,22 +62,25 @@ var Fill = (function() {
 
   var stockSport = [
     {name: "NBA",
-      id: 1}
+      id: 1},
+    {name: "TBA",
+      id: 2}
   ]
 
   var stockLeague = [
     {name: "Stocky",
-    id: 1}
+      id: 1},
+    {name: "NotStocky",
+      id: 2}
   ]
 
-  var selectedTeams = []
-  var selectedPlayers = []
-  var realWorldTeams = []
-  var TEST_SPORT_ID = 1
-  var TEST_LEAGUE_ID = 1
 
   var _fillTeams = function(user) {
+    var selectedTeams = []
+    var selectedPlayers = []
     var selectedSport = ""
+    var TEST_SPORT_ID = 1
+    var TEST_LEAGUE_ID = 1
     if (user.role !== 'admin') {
       console.log("Error, user is not an admin, user role is: " + user.role);
       return Promise.reject("User is not an admin");
@@ -94,28 +99,25 @@ var Fill = (function() {
         where: [{ special: null, SportId: selectedSport.id, LeagueId: TEST_LEAGUE_ID }]
       });
     }).then(function(teams) {
-      return setSelectedTeams(teams);
+      selectedTeams = teams
     }).then(function() {
       return db.Player.findAll({
         where: { SportId: selectedSport.id }
       });
     }).then(function(players) {
-      return setSelectedPlayers(players);
+      selectedPlayers = players
     }).then(function() {
       return assignPlayers(selectedTeams, selectedPlayers);
     });
   }
 
-  var setSelectedTeams = function(teams) {
-    selectedTeams = teams;
-  }
-
-  var setSelectedPlayers = function(players) {
-    selectedPlayers = players;
-  }
-
   var assignPlayers = function(teams, players) {
-    getRealWorldTeams(players);
+    var realWorldTeams = []
+
+    realWorldTeams = _.chain(players)
+      .pluck('realWorldTeam')
+      .uniq()
+      .value();
     return BPromise.map(realWorldTeams, function(realTeam) {
       var realTeamIndex = realWorldTeams.indexOf(realTeam);
       return db.Player.findAll({
@@ -136,13 +138,6 @@ var Fill = (function() {
         });
       });
     });
-  }
-
-  var getRealWorldTeams = function(players) {
-    realWorldTeams = _.chain(players)
-      .pluck('realWorldTeam')
-      .uniq()
-      .value();
   }
 
   return {

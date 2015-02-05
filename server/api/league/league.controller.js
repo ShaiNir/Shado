@@ -3,7 +3,11 @@
 var _ = require('lodash');
 var db = require('../models');
 var League = db.League;
+var Sport = db.Sport;
+var Team = db.Team;
+var Player = db.Player;
 var logger = require('../../logger')
+var BPromise = require("sequelize/node_modules/bluebird");
 
 var teamArray = []
 
@@ -120,8 +124,11 @@ exports.settings = function(req, res) {
     });
 };
 
+// Populate a sport of a league with teams
 exports.populate = function(req, res) {
+  var selectedLeague = "";
   var user = req.user;
+
   if (user.role !== 'admin') {
     logger.log("error", "Populating league is restricted to admins only");
     return res.send (403);
@@ -130,12 +137,56 @@ exports.populate = function(req, res) {
     if (!league) {
       return res.send(404);
     }
-    return populateLeague(league);
+    selectedLeague = league;
+  }).then(function () {
+    return Sport.find(req.params.sport_id);
+  }).then(function(selectedSport) {
+    return populateLeague(selectedLeague, selectedSport);
     }).then (function() {
       return res.send(204, league);
     }).catch (function(error) {
       return handleError(res, error);
     });
+};
+
+// Fill all teams in a sport of a league with players of the same sport
+exports.fill = function(req, res) {
+    var selectedSport = ""
+    var selectedLeague = ""
+    var selectedTeams = []
+    var selectedPlayers = []
+
+    var user = req.user;
+    if (user.role !== 'admin') {
+        logger.log("error", "Filling teams is restricted to admins only");
+        return res.send (403);
+    }
+    League.find(req.params.id).then(function(league) {
+      selectedLeague = league
+    }).then(function() {
+      return Sport.find(req.params.sport_id)
+    }).then(function(sport) {
+      selectedSport = sport
+    }).then(function() {
+      return Team.findAll({
+        where: [{ special: null, SportId: selectedSport.id, LeagueId: selectedLeague.id }]
+      });
+    }).then(function(teams) {
+      selectedTeams = teams
+    }).then(function() {
+      return Player.findAll({
+        where: { SportId: selectedSport.id }
+      })
+    }).then(function(players) {
+      selectedPlayers = players
+    }).then(function() {
+      return assignPlayers(selectedTeams, selectedPlayers);
+    }).then(function() {
+      return res.send(204);
+    })
+  .catch (function(error) {
+      return handleError(res, error);
+  });
 };
 
 function handleError(res, error) {
@@ -146,17 +197,19 @@ function handleError(res, error) {
 * Created by Sammy on 12/3/14
 **/
 
-function populateLeague(league) {
+function populateLeague(league, sport) {
   var commishTeam = {
     name: 'Commisioner Team',
     special: 'commish',
     LeagueId: league.id,
+    SportId: sport.id
   };
 
   var freeAgencyTeam = {
     name: 'Free Agency Team',
     special: 'freeagency',
     LeagueId: league.id,
+    SportId: sport.id
   };
 
   var userTeams = [
@@ -185,7 +238,8 @@ function populateLeague(league) {
   _(userTeams).forEach(function(teamName) {
     teamArray.push({
       name: teamName,
-      LeagueId: league.id
+      LeagueId: league.id,
+      SportId: sport.id
     });
   });
   teamArray.push(commishTeam, freeAgencyTeam);
@@ -198,6 +252,39 @@ function createTeams(teamArray) {
     .success(function() {
       logger.log("info", "Suceeded in populating league");
     }).error(function(err) {
-      logger.log("error", "Failure to populate league")
+      return logger.log("error", "Failure to populate league")
     })
 }
+
+/**
+* Created by Sammy on 1/13/15
+**/
+
+function assignPlayers(teams, players) {
+    var realWorldTeams = []
+
+    realWorldTeams = _.chain(players)
+      .pluck('realWorldTeam')
+      .uniq()
+      .value();
+    return BPromise.map(realWorldTeams, function(realTeam) {
+        var realTeamIndex = realWorldTeams.indexOf(realTeam);
+        return db.Player.findAll({
+            where: { realWorldTeam: realTeam }
+        }).then(function(realTeamPlayers) {
+            return BPromise.map(realTeamPlayers, function(realTeamPlayer) {
+                if (realTeamIndex >= teams.length) {
+                    db.Team.find({
+                    where: {special: "freeagency"}
+                }).then(function(freeAgentTeam) {
+                    freeAgentTeam.addPlayer(realTeamPlayer);
+                    return freeAgentTeam.save();
+                });
+                } else {
+                    teams[realTeamIndex].addPlayer(realTeamPlayer);
+                    return teams[realTeamIndex].save();
+                }
+            });
+        });
+    });
+  }
