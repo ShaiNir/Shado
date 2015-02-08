@@ -85,7 +85,7 @@ var Fill = (function() {
       console.log("Error, user is not an admin, user role is: " + user.role);
       return Promise.reject("User is not an admin");
     }
-    db.Sport.bulkCreate(stockSport).then(function() {
+    return db.Sport.bulkCreate(stockSport).then(function() {
       return db.League.bulkCreate(stockLeague);
     }).then(function() {
       return db.Team.bulkCreate(stockTeams);
@@ -125,15 +125,15 @@ var Fill = (function() {
       }).then(function(realTeamPlayers) {
         return BPromise.map(realTeamPlayers, function(realTeamPlayer) {
           if (realTeamIndex >= teams.length) {
-            db.Team.find({
+            return db.Team.find({
               where: {special: "freeagency"}
             }).then(function(freeAgentTeam) {
               freeAgentTeam.addPlayer(realTeamPlayer);
               return freeAgentTeam.save();
             });
           } else {
-              teams[realTeamIndex].addPlayer(realTeamPlayer);
-              return teams[realTeamIndex].save();
+            teams[realTeamIndex].addPlayer(realTeamPlayer);
+            return teams[realTeamIndex].save();
           }
         });
       });
