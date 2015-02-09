@@ -16,10 +16,10 @@ var Populate = (function() {
         return db.League.create({
             name: 'Test League',
             id: 1
-        }).success(function(league){
-            pushTeams(league);
-        }).success(function(){
-            db.Team.bulkCreate(teamArray)
+        }).then(function(league){
+            return pushTeams(league);
+        }).then(function(){
+            return db.Team.bulkCreate(teamArray)
         });
     }
 
@@ -66,7 +66,7 @@ var Populate = (function() {
               LeagueId: league.id
             });
           });
-        teamArray.push(commishTeam, freeAgencyTeam);
+        return teamArray.push(commishTeam, freeAgencyTeam);
     }
     return {
         fillLeague : _fillLeague
