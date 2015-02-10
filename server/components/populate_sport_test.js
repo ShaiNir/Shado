@@ -13,10 +13,13 @@ var Populate = (function(){
   var _parseCsv = function(csv, sport) {
     var fileStream = fs.createReadStream(csv);
     var csvConverter = new Converter({constructResult:true});
-    csvConverter.on("end_parsed",function(jsonObj){
-      return populateDatabase(jsonObj, sport);
+    return BPromise.try(function() {
+      csvConverter.on("end_parsed",function(jsonObj){
+        return populateDatabase(jsonObj, sport);
+      });
+    }).then(function() {
+      return fileStream.pipe(csvConverter);
     });
-    return fileStream.pipe(csvConverter);
   };
 
   var populateDatabase = function(players, sport) {
@@ -29,10 +32,11 @@ var Populate = (function(){
           contractExpires: player.contractExpires
         }
       }).spread(function(newPlayer, created) {
-        newPlayer.setSport(sport);
+        return newPlayer.setSport(sport)
+      }).then(function(newPlayer) {
         return newPlayer.save();
-      // }).catch(function(err) {
-      //   return console.log("error", "Failed to process player: " + player.playerName);
+      }).catch(function(err) {
+        return console.log("error", "Failed to process player: " + player.playerName);
       });
     });
   }

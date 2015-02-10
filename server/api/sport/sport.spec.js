@@ -39,17 +39,17 @@ describe('POST /api/sports/:id/populate', function() {
 
   beforeEach(function(done) {
     var typesToClear = [
-      db.Sport,
-      db.Player
-    ];
+      db.Player,
+      db.Sport
+    ]
     testUtil.clearSequelizeTables(typesToClear,done);
   });
 
   beforeEach(function(done) {
     db.Sport.create({ name:'Test MLB', id:TEST_SPORT_ID }).then(function(sport) {
       done();
-    });
-  });
+    })
+  })
 
   it('should have a sport', function(done) {
     db.Sport.find(TEST_SPORT_ID).then(function() {
@@ -57,13 +57,17 @@ describe('POST /api/sports/:id/populate', function() {
     });
   });
 
-  it('should find all players created in a sport', function(done){
+  it('should find all players created in a sport', function(done) {
     db.Sport.find(TEST_SPORT_ID).then(function(sport) {
       return populateTest.parseCsv(baseCsv, sport);
     }).then(function() {
       return db.Player.findAll({ where: {SportId: TEST_SPORT_ID} })
     }).then(function(result) {
-      result.should.be.above(0);
+      console.log("LENGTHS");
+      console.log(result.length);
+      console.log(result);
+      result.length.should.be.above(0);
+      done();
     });
   });
 
