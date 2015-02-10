@@ -2,6 +2,7 @@ var _ = require('lodash');
 var BPromise = require("sequelize/node_modules/bluebird");
 var db = require('../models');
 var MessageHelper = require ('../message/message.helper.js');
+var PlayerHelper = require ('../player/player.helper.js');
 
 var COUNTERED_MESSAGE = function(teamName){
     if(teamName != null){
@@ -260,5 +261,80 @@ exports.acceptOrReject = function(transactionId, teamId, isApproved){
         }
         approval.status = isApproved ? 'approved' : 'rejected';
         return approval.save();
+    })
+}
+
+// Transfers a given budget amount from source team to destination team
+// Returns a promise
+exports.transferBudget = function(amount, sourceId, destinationId){
+    return BPromise.bind({}).then(function(){
+        return db.Team.find(sourceId);
+    }).then(function(sourceTeam){
+        this.sourceTeam = sourceTeam;
+        return db.Team.find(destinationId);
+    }).then(function(destinationTeam){
+        this.destinationTeam = destinationTeam;
+    }).then(function(){
+        if(this.sourceTeam.budget - amount < 0){
+            return BPromise.reject("Budget transfer failed because source team " + sourceId + " does not have " + amount + " available (it only has " + this.sourceTeam.budget + ".")
+        }
+        return db.sequelize.transaction()
+    }).then(function(sqlChunk){
+        this.sqlChunk = sqlChunk;
+        this.sourceTeam.budget = this.sourceTeam.budget - amount;
+        return this.sourceTeam.save({transaction: this.sqlChunk})
+    }).then(function(){
+        //TODO why is this concatenating strings
+        this.destinationTeam.budget = this.destinationTeam.budget + amount;
+        return this.destinationTeam.save({transaction: this.sqlChunk})
+    }).then(function(){
+        return this.sqlChunk.commit();
+    }).catch(function(error){
+        this.sqlChunk.rollback();
+        return BPromise.reject(error);
+    })
+}
+
+// Given a TransactionItem, switches the ownership of the asset to the destination team
+// TODO If the assets are part of any existing trade proposals, cancel those proposals
+// Returns a Promise
+exports.resolveTransactionItem = function(item, leagueId){
+    switch (item.assetType) {
+        case 'Player':
+            return PlayerHelper.changePlayerAssignment(item.asset, item.destinationId, leagueId)
+            break;
+        case 'Budget':
+            return exports.transferBudget(parseInt(item.asset), item.sourceId, item.destinationId)
+            break;
+        default:
+            return BPromise.reject(item.assetType + " is an invalid asset type for transaction item " + item.id)
+    }
+}
+
+//Resolves a transaction:
+//Verifies asset ownership
+//Assigns assets to their new team (while atomically removing previous ownership)
+//Checks every transaction involving these assets and suspends any that are no longer valid
+//Returns a Promise
+exports.transact = function(transactionId){
+    return BPromise.bind({}).then(function() {
+        var query = {
+            where: {id: transactionId},
+            include: [{
+                model: db.TransactionItem,
+                required: false
+            }]
+        }
+        return db.Transaction.find(query)
+    }).then(function(transaction){
+        this.transaction = transaction;
+        return exports.verifyAssetOwners(transaction.TransactionItems)
+    }).then(function(failures){
+        if(failures.length > 0){
+            return BPromise.reject(failures)
+        }
+        return this.transaction.TransactionItems;
+    }).map(function(item){
+        return exports.resolveTransactionItem(item, this.transaction.LeagueId)
     })
 }

@@ -219,6 +219,9 @@ describe('Verify Asset Owner', function(){
             return TransactionHelper.verifyAssetOwners(items);
         }).then(function(errors) {
             errors.should.be.instanceOf(Array);
+            if(errors.length !== 0){
+                console.log("SDEB VAO errors " + JSON.stringify(errors))
+            }
             errors.length.should.equal(0);
             done()
         });
@@ -307,4 +310,48 @@ describe('acceptOrReject', function() {
             done();
         })
     })
+})
+
+
+describe('transact', function(){
+    beforeEach(function (done) {
+        // Clear db before testing
+        var typesToClear = [
+            db.Team,
+            db.League,
+            db.LeagueSetting,
+            db.Player,
+            db.PlayerAssignment,
+            db.Transaction,
+            db.TransactionItem,
+            db.TransactionApproval
+        ];
+        testUtil.clearSequelizeTables(typesToClear, done);
+    });
+
+    it('should correctly switch asset ownership', function(done){
+        setUpSimpleTrade().then(function(){
+            return TransactionHelper.transact(this.transaction.id)
+        }).then(function(){
+            var leagueQuery = {
+                where: {id: this.league.id},
+                include: [{
+                    model: db.Team,
+                    include: db.Player
+                }]
+            }
+            return db.League.find(leagueQuery)
+        }).then(function(resultLeague){
+            var team1 = _.find(resultLeague.Teams, {name: this.team1.name})
+            var team2 = _.find(resultLeague.Teams, {name: this.team2.name})
+            team1.Players.length.should.equal(1);
+            team1.Players[0].id.should.equal(this.player2.id);
+            team1.budget.should.equal(1500);
+            team2.Players.length.should.equal(1);
+            team2.Players[0].id.should.equal(this.player1.id);
+            team2.budget.should.equal(500);
+            done()
+        })
+    })
+
 })
