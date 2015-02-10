@@ -6,6 +6,8 @@ var request = require('supertest');
 var db = require('../models');
 var testUtil = require('../../components/test-util.js');
 
+db.sequelize.sync();
+
 describe('GET /api/teams', function() {
 
   it('should respond with JSON array', function(done) {
@@ -26,6 +28,8 @@ describe('GET /api/teams/:id/players', function() {
   before(function(done) {
       // Clear db before testing
       var typesToClear = [
+          db.Sport,
+          db.League,
           db.Team,
           db.Player,
           db.PlayerAssignment

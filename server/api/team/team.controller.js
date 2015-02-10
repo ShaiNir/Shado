@@ -2,6 +2,7 @@
 
 var _ = require('lodash');
 var Team = require('../models').Team;
+var Player = require('../models').Player;
 
 // Get list of teams
 exports.index = function(req, res) {
@@ -76,3 +77,4 @@ exports.players = function(req, res) {
 function handleError(res, error) {
     return res.send(500, error);
 }
+
