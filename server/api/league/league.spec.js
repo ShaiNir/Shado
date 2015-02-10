@@ -190,8 +190,8 @@ describe('GET /api/leagues/:id/populate', function() {
     before(function(done) {
         db.User.create(account1).then(function(adminUser) {
             return leagueTest.fillLeague(adminUser);
-        }).then(function() {;
-        done();
+        }).then(function() {
+            done();
         });
     });
 
