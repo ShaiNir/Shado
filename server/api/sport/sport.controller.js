@@ -72,9 +72,10 @@ exports.destroy = function(req, res) {
 exports.populate = function(req, res) {
     Sport.find(req.params.id).then(function (sport) {
         if(!sport) { return res.send(404); }
-        parseCsv(sport)
+        return parseCsv(sport)
+    }).then(function() {
         return res.send(201, sport);
-    }, function(error){
+    }).catch(function(err) {
         return handleError(res, error);
     });
 }
@@ -96,7 +97,7 @@ function parseCsv(sport) {
         }
         var csvPaths = files.map(function(file) {
             return path.join(directory, file);
-            });
+        });
         async.map(csvPaths, function(file, callback) {
             var fileStream = fs.createReadStream(file);
             var csvConverter = new Converter({constructResult:true});

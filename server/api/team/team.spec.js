@@ -24,33 +24,34 @@ describe('GET /api/teams', function() {
 });
 
 describe('GET /api/teams/:id/players', function() {
+  var testTeam = ""
 
   before(function(done) {
-      // Clear db before testing
-      var typesToClear = [
-          db.Sport,
-          db.League,
-          db.Team,
-          db.Player,
-          db.PlayerAssignment
-      ];
-      testUtil.clearSequelizeTables(typesToClear,done);
+  // Clear db before testing
+  var typesToClear = [
+    db.Team,
+    db.Player,
+    db.PlayerAssignment
+  ];
+    testUtil.clearSequelizeTables(typesToClear,done);
   });
 
   before(function(done) {
     db.Team.create({
       name: 'Albany Alphas',
       id: 1
-    }).success(function(team1){
-      db.Player.create({
+    }).then(function(team) {
+      testTeam = team;
+      return db.Player.create({
         name: 'Rodger Umaechi',
         id: 1
-      }).success(function(player1){
-        player1.addTeam(team1);
-        player1.save().success(function(){
-            done();
-        });
-      });
+      })
+    }).then(function(player) {
+      return player.addTeam(testTeam);
+    }).then(function(player) {
+      return player.save()
+    }).then(function() {
+      done();
     });
   });
 
@@ -61,8 +62,8 @@ describe('GET /api/teams/:id/players', function() {
       .expect('Content-Type', /json/)
       .end(function(err, res) {
         if (err) return done(err);
-          res.body.should.be.instanceof(Array);
-          done();
+        res.body.should.be.instanceof(Array);
+        done();
       });
   });
 });

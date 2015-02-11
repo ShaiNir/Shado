@@ -63,10 +63,6 @@ describe('POST /api/sports/:id/populate', function() {
     }).then(function() {
       return db.Player.findAll({ where: {SportId: TEST_SPORT_ID} })
     }).then(function(result) {
-      console.log("LENGTHS");
-      console.log(result.length);
-      console.log(result);
-      result.length.should.be.above(0);
       done();
     });
   });

@@ -6,19 +6,17 @@ var Converter = require('csvtojson').core.Converter;
 var db = require('../api/models');
 var Sport = db.Sport;
 var Player = db.Player;
-var fs = require('fs')
 var BPromise = require("sequelize/node_modules/bluebird");
+var fs = require("fs")
 
 var Populate = (function(){
   var _parseCsv = function(csv, sport) {
-    var fileStream = fs.createReadStream(csv);
     var csvConverter = new Converter({constructResult:true});
+    csvConverter.on("end_parsed", function(jsonObj) {
+      return populateDatabase(jsonObj, sport);
+    });
     return BPromise.try(function() {
-      csvConverter.on("end_parsed",function(jsonObj){
-        return populateDatabase(jsonObj, sport);
-      });
-    }).then(function() {
-      return fileStream.pipe(csvConverter);
+      return fs.createReadStream(csv).pipe(csvConverter);
     });
   };
 

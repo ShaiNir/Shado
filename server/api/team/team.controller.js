@@ -61,15 +61,14 @@ exports.destroy = function(req, res) {
     });
 };
 
+// Get all players in a team
 exports.players = function(req, res) {
     Team.find(req.params.id).then(function (team) {
         if(!team) { return res.send(404); }
-        team.getPlayers().then(function(players) {
-            return res.json(players);
-        }, function(error) {
-            return handleError(res, error);
-        });
-    },  function(error){
+        return team.getPlayers();
+    }).then(function(players) {
+        return res.json(players);
+    }).catch(function(error) {
         return handleError(res, error);
     });
 };
