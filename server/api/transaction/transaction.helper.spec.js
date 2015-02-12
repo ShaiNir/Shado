@@ -219,9 +219,6 @@ describe('Verify Asset Owner', function(){
             return TransactionHelper.verifyAssetOwners(items);
         }).then(function(errors) {
             errors.should.be.instanceOf(Array);
-            if(errors.length !== 0){
-                console.log("SDEB VAO errors " + JSON.stringify(errors))
-            }
             errors.length.should.equal(0);
             done()
         });
@@ -330,7 +327,7 @@ describe('transact', function(){
     });
 
     it('should correctly switch asset ownership', function(done){
-        setUpSimpleTrade().then(function(){
+        setUpSimpleTrade().then(function() {
             return TransactionHelper.transact(this.transaction.id)
         }).then(function(){
             var leagueQuery = {
@@ -346,10 +343,109 @@ describe('transact', function(){
             var team2 = _.find(resultLeague.Teams, {name: this.team2.name})
             team1.Players.length.should.equal(1);
             team1.Players[0].id.should.equal(this.player2.id);
+            team1.Players[0].PlayerAssignment.status.should.equal('inactive');
             team1.budget.should.equal(1500);
             team2.Players.length.should.equal(1);
             team2.Players[0].id.should.equal(this.player1.id);
+            team2.Players[0].PlayerAssignment.status.should.equal('inactive');
             team2.budget.should.equal(500);
+            done()
+        })
+    })
+
+    it('should correctly mark the transaction as complete', function(done) {
+        setUpSimpleTrade().then(function () {
+            return TransactionHelper.transact(this.transaction.id)
+        }).then(function () {
+            return db.Transaction.find(this.transaction.id)
+        }).then(function (resultTransaction) {
+            resultTransaction.status.should.equal('completed');
+            done()
+        })
+    })
+
+
+    it('should cancel a different transaction where a team trading a player away no longer owns that player', function(done){
+        setUpSimpleTrade().then(function(){
+            var otherTradeInfo = {
+                type: 'trade',
+                LeagueId: this.league.id,
+                authorId: this.team1.id,
+                status: 'pending'
+            }
+            return db.Transaction.create(otherTradeInfo);
+        }).then(function (otherTrade) {
+            this.otherTrade = otherTrade;
+            var items = [
+                {
+                    assetType: 'Player',
+                    asset: this.player1.id,
+                    sourceId: this.team1.id,
+                    destinationId: this.team2.id,
+                    TransactionId: this.otherTrade.id
+                },
+                {
+                    assetType: 'Player',
+                    asset: this.player2.id,
+                    sourceId: this.team2.id,
+                    destinationId: this.team1.id,
+                    TransactionId: this.otherTrade.id
+                }
+            ];
+            return db.TransactionItem.bulkCreate(items)
+        }).then(function (otherTradeItems) {
+            this.otherTradeItems = otherTradeItems;
+        }).then(function(){
+            return TransactionHelper.transact(this.transaction.id)
+        }).then(function(){
+            return db.Transaction.find(this.otherTrade.id)
+        }).then(function(resultOtherTrade){
+            resultOtherTrade.status.should.equal('rejected');
+            done();
+        })
+    })
+
+})
+
+describe('rejectTransactionsOverBudgetForTeam', function(){
+    beforeEach(function (done) {
+        // Clear db before testing
+        var typesToClear = [
+            db.Team,
+            db.League,
+            db.LeagueSetting,
+            db.Player,
+            db.PlayerAssignment,
+            db.Transaction,
+            db.TransactionItem,
+            db.TransactionApproval
+        ];
+        testUtil.clearSequelizeTables(typesToClear, done);
+    });
+
+    it('should mark a transaction above budget as rejected', function(done) {
+        setUpSimpleTrade().then(function () {
+            this.team2.budget = this.team2.budget / 4;
+            return this.team2.save()
+        }).then(function(team2) {
+            this.team2 = team2;
+            return TransactionHelper.rejectTransactionsOverBudgetForTeam(this.team2.id)
+        }).then(function () {
+            return db.Transaction.find(this.transaction.id)
+        }).then(function (resultTransaction) {
+            resultTransaction.status.should.equal('rejected');
+            (resultTransaction.statusMessage.indexOf('udget') > 0).should.be.true;
+            done()
+        })
+    })
+
+    it('should not mark a transaction within budget as rejected', function(done) {
+        setUpSimpleTrade().then(function () {
+            return TransactionHelper.rejectTransactionsOverBudgetForTeam(this.team2.id)
+        }).then(function () {
+            return db.Transaction.find(this.transaction.id)
+        }).then(function (resultTransaction) {
+            resultTransaction.status.should.equal('pending');
             done()
         })
     })

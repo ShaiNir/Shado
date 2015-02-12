@@ -264,6 +264,47 @@ exports.acceptOrReject = function(transactionId, teamId, isApproved){
     })
 }
 
+
+var CANCELLED_BUDGET_MESSAGE = function(teamName){
+    if(teamName != null){
+        return 'Cancelled because ' + teamName + ' has insufficient budget'
+    }
+    return 'Cancelled because a team has insufficient budget'
+}
+
+// Given a team ID, looks up every budget transaction that team is involved in
+// and rejects it if the team is offering more budget than it currently has.
+exports.rejectTransactionsOverBudgetForTeam = function(teamId){
+    return BPromise.bind({}).then(function(){
+        return db.Team.find(teamId);
+    }).then(function(sourceTeam){
+        this.sourceTeam = sourceTeam;
+        var query = {
+            where: {status: 'pending'},
+            include: [{
+                model: db.TransactionItem,
+                where: {sourceId: teamId, assetType: 'Budget'},
+                required: true
+            }]
+        }
+        return db.Transaction.findAll(query)
+    }).map(function(transaction){
+        var sourceTeam =  this.sourceTeam
+        var tradeBudget = _.reduce(transaction.TransactionItems, function(sum, item){
+            if(item.assetType == 'Budget' && item.sourceId == sourceTeam.id){
+                return sum + parseInt(item.asset);
+            }
+            return sum;
+        },0)
+        if(tradeBudget > sourceTeam.budget){
+            transaction.status = 'rejected';
+            transaction.statusMessage = CANCELLED_BUDGET_MESSAGE(this.sourceTeam.name);
+            return transaction.save();
+        }
+    });
+}
+
+
 // Transfers a given budget amount from source team to destination team
 // Returns a promise
 exports.transferBudget = function(amount, sourceId, destinationId){
@@ -284,7 +325,6 @@ exports.transferBudget = function(amount, sourceId, destinationId){
         this.sourceTeam.budget = this.sourceTeam.budget - amount;
         return this.sourceTeam.save({transaction: this.sqlChunk})
     }).then(function(){
-        //TODO why is this concatenating strings
         this.destinationTeam.budget = this.destinationTeam.budget + amount;
         return this.destinationTeam.save({transaction: this.sqlChunk})
     }).then(function(){
@@ -292,6 +332,8 @@ exports.transferBudget = function(amount, sourceId, destinationId){
     }).catch(function(error){
         this.sqlChunk.rollback();
         return BPromise.reject(error);
+    }).then(function() {
+        return exports.rejectTransactionsOverBudgetForTeam(sourceId)
     })
 }
 
@@ -315,6 +357,7 @@ exports.resolveTransactionItem = function(item, leagueId){
 //Verifies asset ownership
 //Assigns assets to their new team (while atomically removing previous ownership)
 //Checks every transaction involving these assets and suspends any that are no longer valid
+// TODO consider making entire process a single SQL transaction
 //Returns a Promise
 exports.transact = function(transactionId){
     return BPromise.bind({}).then(function() {
@@ -326,13 +369,21 @@ exports.transact = function(transactionId){
             }]
         }
         return db.Transaction.find(query)
-    }).then(function(transaction){
+    }).then(function(transaction) {
         this.transaction = transaction;
-        return exports.verifyAssetOwners(transaction.TransactionItems)
-    }).then(function(failures){
-        if(failures.length > 0){
+        if(transaction.status == 'rejected'){
+            return BPromise.reject('Transaction ' + this.transaction.id + ' status is rejected so it cannot be completed.')
+        }
+    }).then(function(){
+        return exports.verifyAssetOwners(this.transaction.TransactionItems)
+    }).then(function(failures) {
+        if (failures.length > 0) {
             return BPromise.reject(failures)
         }
+    }).then(function(item){
+        this.transaction.status = 'completed';
+        return this.transaction.save();
+    }).then(function(){
         return this.transaction.TransactionItems;
     }).map(function(item){
         return exports.resolveTransactionItem(item, this.transaction.LeagueId)
