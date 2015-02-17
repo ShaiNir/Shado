@@ -75,7 +75,7 @@ exports.populate = function(req, res) {
         return parseCsv(sport)
     }).then(function() {
         return res.send(201, sport);
-    }).catch(function(err) {
+    }).catch(function(error) {
         return handleError(res, error);
     });
 }
