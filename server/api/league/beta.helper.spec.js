@@ -26,8 +26,7 @@ describe('leaguePlease', function() {
     });
 
     it('should create a sport and a league', function(done) {
-        BetaHelper.leaguePlease().then(function(leagues){
-            leagues.length.should.equal(1)
+        BetaHelper.leaguePlease().then(function(league){
             done()
         })
     });
