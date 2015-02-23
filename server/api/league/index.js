@@ -18,6 +18,7 @@ router.post('/:id/sports/:sport_id/fill', controller.fill, auth.isAuthenticated(
 router.put('/:id', controller.update);
 router.patch('/:id', controller.update);
 router.delete('/:id', controller.destroy);
+router.get('/toy', controller.toy);
 
 
 module.exports = router;

@@ -76,8 +76,18 @@ exports.trade = function(req, res) {
 exports.approve = function(req,res){
     TeamHelper.verifyStake(req.user.id, req.body.TeamId).then(function(authorized){
         if(authorized){
-            TransactionHelper.acceptOrReject(req.params.id,req.body.TeamId,req.body.isApproved).then(function(){
-                return res.json(200)
+            var transactionId = req.params.id
+            TransactionHelper.approveOrReject(transactionId,req.body.TeamId,req.body.isApproved).then(function(){
+                return TransactionHelper.isApproved(transactionId)
+            }).then(function(approved){
+                if(approved){
+                    return TransactionHelper.transact(transactionId).then(function(){
+                        return true;
+                    })
+                }
+                return false;
+            }).then(function(transactionHappened){
+                return res.json(200,transactionHappened)
             })
         } else {
             res.send(403);

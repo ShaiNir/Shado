@@ -240,7 +240,7 @@ exports.verifyAssetOwners = function(transactionItems){
 // Accept or reject a trade proposal
 // If the transaction status is not pending, do not change the approval.
 // Returns a promise
-exports.acceptOrReject = function(transactionId, teamId, isApproved){
+exports.approveOrReject = function(transactionId, teamId, isApproved){
     var query = {
         where: {id: transactionId},
         include: [{
@@ -387,5 +387,29 @@ exports.transact = function(transactionId){
         return this.transaction.TransactionItems;
     }).map(function(item){
         return exports.resolveTransactionItem(item, this.transaction.LeagueId)
+    })
+}
+
+// Verifies that everybody with a given role in the transaction approved the transaction
+var allOfRoleApprove = function(transaction, role){
+    return _.filter(transaction.TransactionApprovals, function(approval){
+        return approval.status != "approved"
+    }).length === 0
+}
+
+// Checks whether a transaction has satisfied all its approval
+// Returns a promise that resolves with a boolean
+exports.isApproved = function(transactionId){
+    var query = {
+        where: {id: transactionId},
+        include: [{
+            model: db.TransactionApproval,
+            required: true
+        }]
+    }
+    return db.Transaction.find(query).then(function(transaction){
+        return _.chain(['participant','commish']).map(function(role){
+            return allOfRoleApprove(transaction,role)
+        }).all().value();
     })
 }

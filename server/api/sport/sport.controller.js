@@ -2,14 +2,7 @@
 
 var _ = require('lodash');
 var Sport = require('../models').Sport;
-var fs = require('fs')
-var output = []
-
-var logger = require('../../logger');
-var Converter = require('csvtojson').core.Converter;
-var Player = require('../models').Player;
-var async = require('async');
-var path = require('path');
+var BetaHelper = require('../league/beta.helper');
 
 // Get list of sports
 exports.index = function(req, res) {
@@ -70,10 +63,7 @@ exports.destroy = function(req, res) {
 
 //Populates a sport's list of default players
 exports.populate = function(req, res) {
-    Sport.find(req.params.id).then(function (sport) {
-        if(!sport) { return res.send(404); }
-        return parseCsv(sport)
-    }).then(function() {
+    BetaHelper.populateSportWithMLBPlayers(req.params.id).then(function() {
         return res.send(201, sport);
     }).catch(function(error) {
         return handleError(res, error);
@@ -82,53 +72,4 @@ exports.populate = function(req, res) {
 
 function handleError(res, error) {
     return res.send(500, error);
-}
-
-//csv's go into a directory in the root folder called 'default_players'.
-//Each csv is (currently) a list of players with the following details,
-// in no particular order: 'playerName', 'contractExpires', 'realWorldTeam',
-// 'defaultSalary'. Capitalization is important for the table names. For
-// contractExpires, use a date format. -Sammy 18/11/14.
-function parseCsv(sport) {
-    var directory = "./default_players"
-    fs.readdir(directory, function(err, files) {
-        if (!files.length) {
-            return logger.log("error", "No files found in default_players");
-        }
-        var csvPaths = files.map(function(file) {
-            return path.join(directory, file);
-        });
-        async.map(csvPaths, function(file, callback) {
-            var fileStream = fs.createReadStream(file);
-            var csvConverter = new Converter({constructResult:true});
-            csvConverter.on("end_parsed",function(jsonObj){
-                populateDatabase(jsonObj, sport);
-            });
-        fileStream.pipe(csvConverter);
-        callback();
-        });
-    }, function(error){
-        logger.log("error", "There was an error in reading the directory.");
-    });
-}
-
-function populateDatabase(players, sport) {
-    async.each(players, function(player, callback) {
-        var promise = Player.findOrCreate({
-            where: {
-                name: player.playerName,
-                defaultSalary: player.defaultSalary,
-                realWorldTeam: player.realWorldTeam,
-                contractExpires: player.contractExpires
-            }
-        });
-        promise.success(function(player, created){
-            player.setSport(sport);
-            player.save();
-        });
-        promise.error(function(err){
-            logger.log("error", "Failed to process player: " + player.playerName);
-        });
-        callback();
-    });
 }

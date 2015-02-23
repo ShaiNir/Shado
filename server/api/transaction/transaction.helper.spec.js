@@ -272,7 +272,7 @@ describe('Verify Asset Owner', function(){
 })
 
 
-describe('acceptOrReject', function() {
+describe('approveOrReject', function() {
     beforeEach(function (done) {
         // Clear db before testing
         var typesToClear = [
@@ -290,7 +290,7 @@ describe('acceptOrReject', function() {
 
     it('should correctly accept a trade', function (done) {
         setUpTradeApprovals().then(function(){
-            return TransactionHelper.acceptOrReject(this.transaction.id, this.team2.id, true);
+            return TransactionHelper.approveOrReject(this.transaction.id, this.team2.id, true);
         }).then(function(approval){
             approval.status.should.equal('approved');
             approval.TeamId.should.equal(this.team2.id);
@@ -300,7 +300,7 @@ describe('acceptOrReject', function() {
 
     it('should correctly reject a trade', function (done) {
         setUpTradeApprovals().then(function(){
-            return TransactionHelper.acceptOrReject(this.transaction.id, this.commish.id, false);
+            return TransactionHelper.approveOrReject(this.transaction.id, this.commish.id, false);
         }).then(function(approval){
             approval.status.should.equal('rejected');
             approval.TeamId.should.equal(this.commish.id);
@@ -446,6 +446,49 @@ describe('rejectTransactionsOverBudgetForTeam', function(){
             return db.Transaction.find(this.transaction.id)
         }).then(function (resultTransaction) {
             resultTransaction.status.should.equal('pending');
+            done()
+        })
+    })
+
+})
+
+
+
+describe('isApproved', function() {
+    beforeEach(function (done) {
+        // Clear db before testing
+        var typesToClear = [
+            db.Team,
+            db.League,
+            db.LeagueSetting,
+            db.Player,
+            db.PlayerAssignment,
+            db.Transaction,
+            db.TransactionItem,
+            db.TransactionApproval
+        ];
+        testUtil.clearSequelizeTables(typesToClear, done);
+    });
+
+    it('should not mark a transaction as accepted if not all of its approval requests are approved', function(done) {
+        setUpTradeApprovals().then(function(){
+            return TransactionHelper.isApproved(this.transaction.id)
+        }).then(function (approved) {
+            approved.should.be.false;
+            done()
+        })
+    })
+
+    it('should mark a transaction as accepted if all of its approval requests are approved', function(done) {
+        setUpTradeApprovals().then(function(){
+            return db.TransactionApproval.update(
+                {status: 'approved'},
+                {where: {TransactionId: this.transaction.id}}
+            )
+        }).then(function(apps){
+            return TransactionHelper.isApproved(this.transaction.id)
+        }).then(function (approved) {
+            approved.should.be.true;
             done()
         })
     })
