@@ -6,6 +6,7 @@ var BPromise = require("sequelize/node_modules/bluebird");
 var Transaction = db.Transaction;
 var TransactionHelper = require('../transaction/transaction.helper');
 var TeamHelper = require('../team/team.helper');
+var MessageHelper = require ('../message/message.helper.js');
 
 // Get list of transactions
 exports.index = function(req, res) {
@@ -81,7 +82,9 @@ exports.approve = function(req,res){
                 return TransactionHelper.isApproved(transactionId)
             }).then(function(approved){
                 if(approved){
-                    return TransactionHelper.transact(transactionId).then(function(){
+                    return TransactionHelper.transact(transactionId).then(function() {
+                        //TODO send a message using MessgeHelper
+                    }).then(function(){
                         return true;
                     })
                 }

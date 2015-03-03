@@ -30,7 +30,7 @@ exports.rejectTransactionsWhereSourceTeamDoesNotOwnPlayer = function(playerId, l
         this.team = teams[0];
 
         var transactionQuery = {
-            where: {status: 'pending'},
+            where: {status: 'pending', LeagueId: leagueId},
             include: [{
                 model: db.TransactionItem,
                 where: {assetType: 'Player', sourceId: {ne: this.team.id}},

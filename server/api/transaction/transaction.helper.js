@@ -159,7 +159,8 @@ exports.createTransaction = function(transactionDetail, items){
     }).then(function(transaction) {
         this.transaction = transaction;
         return BPromise.map(items, function (itemDetail) {
-            return db.TransactionItem.create(itemDetail).then(function (item) {
+            return db.TransactionItem.create(itemDetail, {transaction: this.sqlChunk}).then(function (item)
+            {
                 return item;
             });
         });

@@ -11,7 +11,7 @@ var _ = require('lodash');
 var testUtil = require('../../components/test-util.js');
 
 describe('leaguePlease', function() {
-    this.timeout(5000)
+    this.timeout(10000)
     beforeEach(function(done) {
         // Clear db before testing
         var typesToClear = [

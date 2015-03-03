@@ -31,7 +31,7 @@ exports.show = function(req, res) {
 
 // Creates a new league in the DB.
 exports.create = function(req, res) {
-  League.create(req.body).then(function(league){
+    League.create(req.body).then(function(league){
     return res.json(201, league);
   },function(error) {
     return handleError(res, error);
@@ -117,6 +117,23 @@ exports.rival_teams = function(req, res) {
     return handleError(res, error);
   });
 };
+
+exports.all_teams = function(req,res) {
+    db.Team.findAll({where: {"LeagueId": req.params.id}}).then(function(teams){
+        if(!teams) { return res.send(404); }
+        var teamsWithProfiles = _.map(teams, function(team){
+            var profiles = _.map(team.Users, function(user){
+                return {profile: user.profile, role: user.Stake.role};
+            });
+            var teamObject = team.values;
+            teamObject.Users = profiles;
+            return teamObject;
+        });
+        return res.json(teamsWithProfiles);
+    }).catch(function(error){
+        return handleError(res, error);
+    })
+}
 
 // Get the settings of a given league
 // If a setting key is provided, get the setting just for that key

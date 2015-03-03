@@ -69,8 +69,12 @@ function assignPlayers(teams, players){
                         return freeAgentTeam.save();
                     });
                 } else {
-                    teams[realTeamIndex].addPlayer(realTeamPlayer);
-                    return teams[realTeamIndex].save();
+                    return db.Team.find({
+                        where: {id: teams[realTeamIndex].id}
+                    }).then(function(userTeam) {
+                        userTeam.addPlayer(realTeamPlayer, {salary: realTeamPlayer.defaultSalary, status: 'inactive'});
+                        return userTeam.save();
+                    });
                 }
             });
         });
@@ -147,7 +151,7 @@ exports.populateLeagueWithTeams = function(leagueId, sportId){
                 name: teamName,
                 LeagueId: selectedLeague.id,
                 SportId: selectedSport.id,
-                budget: 200000000
+                budget: 210000000
             });
         });
         teamArray.push(commishTeam, freeAgencyTeam);
@@ -156,10 +160,9 @@ exports.populateLeagueWithTeams = function(leagueId, sportId){
 }
 
 function createTeams(teamArray) {
-    return db.Team
-        .bulkCreate(teamArray)
-        .success(function() {
-            logger.log("info", "Suceeded in populating league");
+    return db.Team.bulkCreate(teamArray).then(function(teams) {
+             logger.log("info", "Suceeded in populating league");
+            return teams
         }).error(function(err) {
             return logger.log("error", "Failure to populate league")
         })
